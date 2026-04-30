@@ -1,0 +1,21 @@
+{% extends "layout.html" %}
+
+{% block title %}
+    {{ invitation.name }} Invitation
+{% endblock %}
+
+{% block main %}
+    <form action="/party/{{ invitation.party_id }}/invitation_response" method="post">
+        <div class="mb-3">
+            <select class="form-control mx-auto w-auto" name="character_id" placeholder="Select character">
+                {% for character in characters %}
+                    <option value="{{ character.id }}">
+                        {{ character.name }}
+                    </option>
+                {% endfor %}
+            </select>
+            <input autocomplete="off" hidden class="form-control mx-auto w-auto" name="party_id" value="{{ invitation.party_id }}" type="text">
+        </div>
+        <button class="btn btn-primary" type="submit">Confirm</button>
+    </form>
+{% endblock %}

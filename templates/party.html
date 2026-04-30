@@ -1,0 +1,41 @@
+{% extends "layout.html" %}
+
+{% block title %}
+    {{ party.name }}
+{% endblock %}
+
+{% block main %}
+    <h2>Characters</h2>
+
+    <table>
+
+        <thead>
+            <tr>
+                <th>User</th>
+                <th>Id</th>
+                <th>Name</th>
+            </tr>
+        </thead>
+
+        <tbody>
+            {% for character in characters %}
+                <tr>
+                    <td>{{ character.user_id }}</td>
+                    <td>{{ character.id }}</td>
+                    <td>{{ character.name }}</td>
+                    <td>
+                        <form action="/character/{{ character.id }}" method="get">
+                            <button class="btn btn-primary" type="submit">View</button>
+                        </form>
+                    </td>
+                </tr>
+            {% endfor %}
+        </tbody>
+
+    </table>
+    {% if party.dm_id == user %}
+        <form action="/party/{{ party.id }}/invitation" method="get">
+            <button class="btn btn-primary" type="submit">Invite player</button>
+        </form>
+    {% endif %}
+{% endblock %}

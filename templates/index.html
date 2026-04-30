@@ -1,0 +1,102 @@
+{% extends "layout.html" %}
+
+{% block title %}
+    Index
+{% endblock %}
+
+{% block main %}
+    <h2>My Characters</h2>
+
+    <table>
+
+        <thead>
+            <tr>
+                <th>User</th>
+                <th>Id</th>
+                <th>Name</th>
+            </tr>
+        </thead>
+
+        <tbody>
+            {% for character in characters %}
+                <tr>
+                    <td>{{ character.user_id }}</td>
+                    <td>{{ character.id }}</td>
+                    <td>{{ character.name }}</td>
+                    <td>
+                        <form action="/character/{{ character.id }}" method="get">
+                            <button class="btn btn-primary" type="submit">View</button>
+                        </form>
+                    </td>
+                </tr>
+            {% endfor %}
+        </tbody>
+
+    </table>
+
+    <form action="/character/new/edit" method="get">
+        <button class="btn btn-primary" type="submit">New Character</button>
+    </form>
+
+    <h2>My Parties</h2>
+
+    <table>
+
+        <thead>
+            <tr>
+                <th>DM</th>
+                <th>Id</th>
+                <th>Name</th>
+            </tr>
+        </thead>
+
+        <tbody>
+            {% for party in parties %}
+                <tr>
+                    <td>{{ party.dm_id }}</td>
+                    <td>{{ party.id }}</td>
+                    <td>{{ party.name }}</td>
+                    <td>
+                        <form action="/party/{{ party.id }}" method="get">
+                            <button class="btn btn-primary" type="submit">View</button>
+                        </form>
+                    </td>
+                </tr>
+            {% endfor %}
+        </tbody>
+
+    </table>
+
+    <form action="/party/new" method="get">
+        <button class="btn btn-primary" type="submit">New Party</button>
+    </form>
+
+    <h2>My Invites</h2>
+
+    <table>
+
+        <thead>
+            <tr>
+                <th>DM</th>
+                <th>Id</th>
+                <th>Name</th>
+            </tr>
+        </thead>
+
+        <tbody>
+            {% for invitation in invitations %}
+                <tr>
+                    <td>{{ invitation.dm_id }}</td>
+                    <td>{{ invitation.id }}</td>
+                    <td>{{ invitation.name }}</td>
+                    <td>
+                        <form action="/party/{{ invitation.id }}/invitation_response" method="get">
+                            <button class="btn btn-primary" type="submit">View</button>
+                        </form>
+                    </td>
+                </tr>
+            {% endfor %}
+        </tbody>
+
+    </table>
+{% endblock %}

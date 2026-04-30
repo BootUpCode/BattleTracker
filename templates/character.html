@@ -1,0 +1,34 @@
+{% extends "layout.html" %}
+
+{% block title %}
+    {{ character.name }}
+{% endblock %}
+
+{% block main %}
+    <table>
+
+        <thead>
+            <tr>
+                <th>User</th>
+                <th>Id</th>
+                <th>Name</th>
+            </tr>
+        </thead>
+
+        <tbody>
+            <tr>
+                <td>{{ character.user_id }}</td>
+                <td>{{ character.id }}</td>
+                <td>{{ character.name }}</td>
+                {% if character.user_id == user %}
+                <td>
+                    <form action="/character/{{ character.id }}/edit" method="get">
+                        <button class="btn btn-primary" type="submit">Edit</button>
+                    </form>
+                </td>
+                {% endif %}
+            </tr>
+        </tbody>
+
+    </table>
+{% endblock %}

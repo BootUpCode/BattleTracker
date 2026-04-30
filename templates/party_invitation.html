@@ -1,0 +1,14 @@
+{% extends "layout.html" %}
+
+{% block title %}
+    Send {{ party.name }} Invitation
+{% endblock %}
+
+{% block main %}
+    <form action="/party/{{ party.id }}/invitation" method="post">
+        <div class="mb-3">
+            <input autocomplete="off" autofocus class="form-control mx-auto w-auto" name="name" placeholder="Username" type="text">
+        </div>
+        <button class="btn btn-primary" type="submit">Invite</button>
+    </form>
+{% endblock %}

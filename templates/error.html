@@ -1,0 +1,11 @@
+{% extends "layout.html" %}
+
+{% block title %}
+    Error
+{% endblock %}
+
+{% block main %}
+    <!-- https://memegen.link/ -->
+    <!-- https://knowyourmeme.com/memes/pondering-my-orb -->
+    <img alt="{{ top }}" class="border img-fluid" src="https://api.memegen.link/images/custom/{{ top | urlencode }}/{{ bottom | urlencode }}.jpg?background=https://i.kym-cdn.com/photos/images/original/002/257/343/ad3" title="{{ top }}">
+{% endblock %}
