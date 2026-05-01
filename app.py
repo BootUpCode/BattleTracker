@@ -1,14 +1,17 @@
 import os
+import sys
 import sqlite3
 
 from flask import Flask, flash, redirect, render_template, request, session
 from flask_session import Session
+from flask_socketio import SocketIO, send, emit
 from werkzeug.security import check_password_hash, generate_password_hash
 
 from helpers import error, login_required
 
 # Configure application
 app = Flask(__name__)
+socketio = SocketIO(app)
 
 # Configure database name
 database = "battle.db"
@@ -18,15 +21,14 @@ app.config["SESSION_PERMANENT"] = False
 app.config["SESSION_TYPE"] = "filesystem"
 Session(app)
 
-# TODO: Require login
+# TODO:
+# - autosort based on initiative
+# - autoupdate party page without refresh
 
 @app.route("/")
 @login_required
 def index():
     """Show user's characters, parties, creatures"""
-    # TODO
-    # Add button for new character, creature
-    # Add button for new party as DM, invite button
 
     # Query database for characters
     with sqlite3.connect(database) as conn:
@@ -43,8 +45,8 @@ def index():
         conn.row_factory = sqlite3.Row
         cur = conn.cursor()
         cur.execute(
-            "SELECT DISTINCT parties.id, parties.dm_id, parties.name FROM parties JOIN players ON parties.id = players.party_id JOIN characters ON players.character_id = characters.id WHERE dm_id = ? OR characters.user_id = ?",
-            (session["user_id"],session["user_id"])
+            "SELECT DISTINCT parties.id, parties.dm_id, parties.name FROM parties LEFT JOIN players ON parties.id = players.party_id LEFT JOIN characters ON players.character_id = characters.id WHERE parties.dm_id = ? OR characters.user_id = ?",
+            (session["user_id"], session["user_id"])
         )
         parties = [dict(row) for row in cur.fetchall()]
 
@@ -94,13 +96,15 @@ def new_character():
         # Ensure fields were submitted
         if not request.form.get("name"):
             return error("must provide character name", 400)
+        if not request.form.get("prof_bonus", type=int) or not request.form.get("max_hitpoints", type=int):
+            return error("invalid input", 400)
 
         # Submit character to database
         with sqlite3.connect(database) as conn:
             cur = conn.cursor()
             cur.execute(
-                "INSERT INTO characters (name, user_id) VALUES (?, ?) RETURNING id",
-                (request.form.get("name"), session["user_id"])
+                "INSERT INTO characters (name, user_id, prof_bonus, max_hitpoints) VALUES (?, ?, ?, ?) RETURNING id",
+                (request.form.get("name"), session["user_id"], int(request.form.get("prof_bonus")), int(request.form.get("max_hitpoints")))
             )
             character_id = cur.fetchone()[0]
             conn.commit()
@@ -207,6 +211,14 @@ def view_party(party_id):
             (party_id,)
         )
         characters = [dict(row) for row in cur.fetchall()]
+
+    # Sort characters based on initiative, highest first, None at the end
+    characters = sorted(characters, key=lambda x: (x["initiative"] is not None, x["initiative"]), reverse=True)
+
+    # Modify initiative for display by replacing None with empty string
+    for character in characters:
+        if character["initiative"] == None:
+            character["initiative"] = ""
 
     return render_template("party.html", party=rows[0], user=session["user_id"], characters=characters)
 
@@ -392,8 +404,8 @@ def party_invitation_response(party_id):
         with sqlite3.connect(database) as conn:
             cur = conn.cursor()
             cur.execute(
-                "INSERT INTO players (party_id, character_id) VALUES (?, ?)",
-                (party_id, request.form.get("character_id"))
+                "INSERT INTO players (party_id, character_id, initiative, current_hitpoints) VALUES (?, ?, ?, ?)",
+                (party_id, character[0]["id"], None, character[0]["max_hitpoints"])
             )
             conn.commit()
 
@@ -576,3 +588,49 @@ def register():
     # User reached route via GET (as by clicking a link or via redirect)
     else:
         return render_template("register.html")
+    
+
+# Handle user hp input
+@socketio.on('hp_update')
+def handle_hp_update(party_id, character_id, current_hitpoints):
+
+    # Ensure correct data was submitted
+    try:
+        party_id = int(party_id)
+        character_id = int(character_id)
+        current_hitpoints = int(current_hitpoints)
+    except TypeError:
+        return
+
+    # Update character in database
+    with sqlite3.connect(database) as conn:
+        cur = conn.cursor()
+        cur.execute(
+            "UPDATE players SET current_hitpoints = ? WHERE party_id = ? AND character_id = ?",
+            (current_hitpoints, party_id, character_id)
+        )
+        conn.commit()
+
+# Handle user initiative input
+@socketio.on('init_update')
+def handle_hp_update(party_id, character_id, initiative):
+
+    # Ensure correct data was submitted
+    try:
+        party_id = int(party_id)
+        character_id = int(character_id)
+        if initiative == "":
+            initiative = None
+        else:
+            initiative = int(initiative)
+    except TypeError:
+        return
+
+    # Update character in database
+    with sqlite3.connect(database) as conn:
+        cur = conn.cursor()
+        cur.execute(
+            "UPDATE players SET initiative = ? WHERE party_id = ? AND character_id = ?",
+            (initiative, party_id, character_id)
+        )
+        conn.commit()

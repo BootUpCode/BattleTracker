@@ -4,9 +4,35 @@
     {{ party.name }}
 {% endblock %}
 
+{% block head %}
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
+    <script type="text/javascript" charset="utf-8">
+        var socket = io();
+
+        // Listen for messages from server
+        socket.on("message", function(data) {
+            var messages = document.getElementById("messages");
+            messages.innerHTML += `<p>${data}</p>`;
+        });
+
+        // Functions to send information back
+        function send_init(id, value)
+        {
+            var hp_update = [document.getElementById("party_id").value, id, value];
+            socket.emit('init_update', document.getElementById("party_id").value, id, value);
+        }
+
+        function send_hp(id, value)
+        {
+            var hp_update = [document.getElementById("party_id").value, id, value];
+            socket.emit('hp_update', document.getElementById("party_id").value, id, value);
+        }
+    </script>
+{% endblock %}
+
 {% block main %}
     <h2>Characters</h2>
-
+    <input id="party_id" hidden type="text" value="{{ party.id }}">
     <table>
 
         <thead>
@@ -14,6 +40,8 @@
                 <th>User</th>
                 <th>Id</th>
                 <th>Name</th>
+                <th>Initiative</th>
+                <th>Hitpoints</th>
             </tr>
         </thead>
 
@@ -23,6 +51,17 @@
                     <td>{{ character.user_id }}</td>
                     <td>{{ character.id }}</td>
                     <td>{{ character.name }}</td>
+                    {% if character.user_id == user or party.dm_id == user %}
+                        <td>
+                            <input id="{{ character.id }}" onchange="send_init(this.id, this.value)" type="text" value="{{ character.initiative }}">
+                        </td>
+                        <td>
+                            <input id="{{ character.id }}" onchange="send_hp(this.id, this.value)" type="text" value="{{ character.current_hitpoints }}"> / {{ character.max_hitpoints }}
+                        </td>
+                    {% else %}
+                        <td>{{ character.initiative }}</td>
+                        <td>{{ character.current_hitpoints }} / {{ character.max_hitpoints }}</td>
+                    {% endif %}
                     <td>
                         <form action="/character/{{ character.id }}" method="get">
                             <button class="btn btn-primary" type="submit">View</button>

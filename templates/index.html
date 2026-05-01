@@ -11,18 +11,18 @@
 
         <thead>
             <tr>
-                <th>User</th>
-                <th>Id</th>
                 <th>Name</th>
+                <th>Prof. Bonus</th>
+                <th>Max HP</th>
             </tr>
         </thead>
 
         <tbody>
             {% for character in characters %}
                 <tr>
-                    <td>{{ character.user_id }}</td>
-                    <td>{{ character.id }}</td>
                     <td>{{ character.name }}</td>
+                    <td>{{ character.prof_bonus }}</td>
+                    <td>{{ character.max_hitpoints }}</td>
                     <td>
                         <form action="/character/{{ character.id }}" method="get">
                             <button class="btn btn-primary" type="submit">View</button>
@@ -67,7 +67,7 @@
 
     </table>
 
-    <form action="/party/new" method="get">
+    <form action="/party/new/edit" method="get">
         <button class="btn btn-primary" type="submit">New Party</button>
     </form>
 
