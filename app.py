@@ -4,7 +4,7 @@ import sqlite3
 
 from flask import Flask, flash, redirect, render_template, request, session
 from flask_session import Session
-from flask_socketio import SocketIO, send, emit
+from flask_socketio import SocketIO, send, emit, join_room, leave_room
 from werkzeug.security import check_password_hash, generate_password_hash
 
 from helpers import error, login_required
@@ -590,30 +590,23 @@ def register():
         return render_template("register.html")
     
 
-# Handle user hp input
-@socketio.on('hp_update')
-def handle_hp_update(party_id, character_id, current_hitpoints):
+# Handle user joining party room
+@socketio.on("join")
+def on_join(data):
+    # Join room for party
+    join_room(data["party_id"])
 
-    # Ensure correct data was submitted
-    try:
-        party_id = int(party_id)
-        character_id = int(character_id)
-        current_hitpoints = int(current_hitpoints)
-    except TypeError:
-        return
 
-    # Update character in database
-    with sqlite3.connect(database) as conn:
-        cur = conn.cursor()
-        cur.execute(
-            "UPDATE players SET current_hitpoints = ? WHERE party_id = ? AND character_id = ?",
-            (current_hitpoints, party_id, character_id)
-        )
-        conn.commit()
+# Handle user leaving party room
+@socketio.on("leave")
+def on_leave(data):
+    # Leave room for party
+    leave_room(data["party_id"])
+
 
 # Handle user initiative input
 @socketio.on('init_update')
-def handle_hp_update(party_id, character_id, initiative):
+def handle_init_update(party_id, character_id, initiative):
 
     # Ensure correct data was submitted
     try:
@@ -634,3 +627,33 @@ def handle_hp_update(party_id, character_id, initiative):
             (initiative, party_id, character_id)
         )
         conn.commit()
+
+    # Send update to party room
+    emit("init_updated", {"character_id": str(character_id), "initiative": str(initiative)}, to=str(party_id))
+
+
+# Handle user hp input
+@socketio.on('hp_update')
+def handle_hp_update(party_id, character_id, current_hitpoints):
+
+    # Ensure correct data was submitted
+    try:
+        party_id = int(party_id)
+        character_id = int(character_id)
+        current_hitpoints = int(current_hitpoints)
+    except TypeError:
+        return
+    except ValueError:
+        return
+
+    # Update character in database
+    with sqlite3.connect(database) as conn:
+        cur = conn.cursor()
+        cur.execute(
+            "UPDATE players SET current_hitpoints = ? WHERE party_id = ? AND character_id = ?",
+            (current_hitpoints, party_id, character_id)
+        )
+        conn.commit()
+
+    # Send update to party room
+    emit("hp_updated", {"character_id": str(character_id), "current_hitpoints": str(current_hitpoints)}, to=str(party_id))

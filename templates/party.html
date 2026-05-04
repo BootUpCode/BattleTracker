@@ -9,30 +9,59 @@
     <script type="text/javascript" charset="utf-8">
         var socket = io();
 
-        // Listen for messages from server
-        socket.on("message", function(data) {
-            var messages = document.getElementById("messages");
-            messages.innerHTML += `<p>${data}</p>`;
+        // Join party room when socket connects
+        socket.on("connect", function(data) {
+            socket.emit("join", {
+                "party_id": "{{ party.id }}"
+            })
         });
 
-        // Functions to send information back
-        function send_init(id, value)
+        // Listen for updates from server
+        socket.on("init_updated", function({character_id, initiative}) {
+            var input_init_element = document.getElementById("input_init_" + character_id);
+            var span_init_element = document.getElementById("span_init_" + character_id);
+            if (input_init_element)
+            {
+                input_init_element.value = initiative;
+            }
+            else if (span_init_element)
+            {
+                span_init_element.innerHTML = initiative;
+            }
+        });
+
+        socket.on("hp_updated", function({character_id, current_hitpoints}) {
+            var input_hp_element = document.getElementById("input_hp_" + character_id);
+            var span_hp_element = document.getElementById("span_hp_" + character_id);
+            if (input_hp_element)
+            {
+                input_hp_element.value = current_hitpoints;
+            }
+            else if (span_hp_element)
+            {
+                span_hp_element.innerHTML = current_hitpoints;
+            }
+        });
+
+        // Send information to server
+        function send_init(character_id, initiative)
         {
-            var hp_update = [document.getElementById("party_id").value, id, value];
-            socket.emit('init_update', document.getElementById("party_id").value, id, value);
+            socket.emit("init_update", document.getElementById("party_id").value, character_id, initiative);
         }
 
-        function send_hp(id, value)
+        function send_hp(character_id, current_hitpoints)
         {
-            var hp_update = [document.getElementById("party_id").value, id, value];
-            socket.emit('hp_update', document.getElementById("party_id").value, id, value);
+            socket.emit("hp_update", document.getElementById("party_id").value, character_id, current_hitpoints);
         }
+
     </script>
 {% endblock %}
 
 {% block main %}
-    <h2>Characters</h2>
     <input id="party_id" hidden type="text" value="{{ party.id }}">
+
+    <h2>Characters</h2>
+    
     <table>
 
         <thead>
@@ -53,14 +82,19 @@
                     <td>{{ character.name }}</td>
                     {% if character.user_id == user or party.dm_id == user %}
                         <td>
-                            <input id="{{ character.id }}" onchange="send_init(this.id, this.value)" type="text" value="{{ character.initiative }}">
+                            <input id="input_init_{{ character.id }}" onchange="send_init(this.id.substring(11), this.value)" type="text" value="{{ character.initiative }}">
                         </td>
                         <td>
-                            <input id="{{ character.id }}" onchange="send_hp(this.id, this.value)" type="text" value="{{ character.current_hitpoints }}"> / {{ character.max_hitpoints }}
+                            <input id="input_hp_{{ character.id }}" onchange="send_hp(this.id.substring(9), this.value)" type="text" value="{{ character.current_hitpoints }}"> / {{ character.max_hitpoints }}
                         </td>
                     {% else %}
-                        <td>{{ character.initiative }}</td>
-                        <td>{{ character.current_hitpoints }} / {{ character.max_hitpoints }}</td>
+                        <td>
+                            <span id="span_init_{{ character.id }}">{{ character.initiative }}</span>
+                        </td>
+                        <td>
+                            <span id="span_hp_{{ character.id }}">{{ character.current_hitpoints }}</span>
+                            <span>/ {{ character.max_hitpoints }}</span>
+                        </td>
                     {% endif %}
                     <td>
                         <form action="/character/{{ character.id }}" method="get">
