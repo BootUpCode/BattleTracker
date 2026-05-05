@@ -22,8 +22,20 @@ app.config["SESSION_TYPE"] = "filesystem"
 Session(app)
 
 # TODO:
-# - autosort based on initiative
-# - autoupdate party page without refresh
+
+# PARTY
+# - expand character to save more data:
+    # characters: Class, Level, Species, AC, Speed, Str/Dex/Con/Int/Wis/Cha scores, Str/Dex/Con/Int/Wis/Cha save proficiency, Initiative/skill proficiency
+    # players: temp HP, AC bonus, Speed bonus
+    # resources: id, character_id, name, number, refresh time (for hit dice, spell slots, class abilities, item charges)
+    # attacks: id, character_id, name, bonus, damage, type, range
+    # features: character id, name, description
+# - button to sort based on initiative for DM
+
+# CREATURES
+# - view/add creature pages
+# - creature CRUD
+# - creature infoview in party screen
 
 @app.route("/")
 @login_required
@@ -50,17 +62,27 @@ def index():
         )
         parties = [dict(row) for row in cur.fetchall()]
 
-    # Query database for invitations
+    # Query database for received invitations
     with sqlite3.connect(database) as conn:
         conn.row_factory = sqlite3.Row
         cur = conn.cursor()
         cur.execute(
-            "SELECT * FROM invitations JOIN parties ON invitations.party_id = parties.id WHERE user_id = ?",
+            "SELECT * FROM invitations JOIN parties ON invitations.party_id = parties.id JOIN users ON parties.dm_id = users.id WHERE user_id = ?",
             (session["user_id"],)
         )
-        invitations = [dict(row) for row in cur.fetchall()]
+        received_invitations = [dict(row) for row in cur.fetchall()]
 
-    return render_template("index.html", characters=characters, parties=parties, invitations=invitations)
+    # Query database for sent invitations
+    with sqlite3.connect(database) as conn:
+        conn.row_factory = sqlite3.Row
+        cur = conn.cursor()
+        cur.execute(
+            "SELECT * FROM invitations JOIN parties ON invitations.party_id = parties.id JOIN users ON invitations.user_id = users.id WHERE parties.dm_id = ?",
+            (session["user_id"],)
+        )
+        sent_invitations = [dict(row) for row in cur.fetchall()]
+
+    return render_template("index.html", characters=characters, parties=parties, received_invitations=received_invitations, sent_invitations=sent_invitations)
 
 
 @app.route("/character/<character_id>")
@@ -128,15 +150,56 @@ def edit_character(character_id):
     if request.method == "POST":
 
         # Ensure fields were submitted
-        if not request.form.get("name"):
-            return error("must provide character name", 400)
+        if not request.form.get("name") or not request.form.get("prof_bonus") or not request.form.get("max_hitpoints"):
+            return error("missing input", 400)
+        
+        # Query database for attacks
+        with sqlite3.connect(database) as conn:
+            conn.row_factory = sqlite3.Row
+            cur = conn.cursor()
+            cur.execute(
+                "SELECT * FROM attacks WHERE character_id = ?",
+                (character_id,)
+            )
+            attacks = [dict(row) for row in cur.fetchall()]
+
+        # Update or delete existing attacks in database
+        for attack in attacks:
+            if request.form.get("attack_name_" + str(attack["id"])) and request.form.get("attack_bonus_" + str(attack["id"])):
+                with sqlite3.connect(database) as conn:
+                    cur = conn.cursor()
+                    cur.execute(
+                        "UPDATE attacks SET name = ?, bonus = ? WHERE id = ? AND character_id = ?",
+                        (request.form.get("attack_name_" + str(attack["id"])), request.form.get("attack_bonus_" + str(attack["id"])), attack["id"], character_id)
+                    )
+                    conn.commit()
+            else:
+                with sqlite3.connect(database) as conn:
+                    cur = conn.cursor()
+                    cur.execute(
+                        "DELETE FROM attacks WHERE id = ? AND character_id = ?",
+                        (attack["id"], character_id)
+                    )
+                    conn.commit()
+
+        # Insert new attacks in database
+        if request.form.get("new_attack_count"):
+            for i in range(int(request.form.get("new_attack_count"))):
+                if request.form.get("new_attack_name_" + str(i)) and request.form.get("new_attack_bonus_" + str(i)):
+                    with sqlite3.connect(database) as conn:
+                        cur = conn.cursor()
+                        cur.execute(
+                            "INSERT INTO attacks (name, bonus, character_id) VALUES (?, ?, ?)",
+                            (request.form.get("new_attack_name_" + str(i)), request.form.get("new_attack_bonus_" + str(i)), character_id)
+                        )
+                        conn.commit()
 
         # Update character in database
         with sqlite3.connect(database) as conn:
             cur = conn.cursor()
             cur.execute(
-                "UPDATE characters SET name = ? WHERE id = ? AND user_id = ?",
-                (request.form.get("name"), character_id, session["user_id"])
+                "UPDATE characters SET name = ?, prof_bonus = ?, max_hitpoints = ? WHERE id = ? AND user_id = ?",
+                (request.form.get("name"), request.form.get("prof_bonus"), request.form.get("max_hitpoints"), character_id, session["user_id"])
             )
             conn.commit()
 
@@ -154,16 +217,26 @@ def edit_character(character_id):
                 "SELECT * FROM characters WHERE id = ?",
                 (character_id,)
             )
-            rows = [dict(row) for row in cur.fetchall()]
+            characters = [dict(row) for row in cur.fetchall()]
 
         # Ensure character exists
-        if len(rows) != 1:
+        if len(characters) != 1:
             return error("not found", 404)
         # Ensure character is owned by current user
-        elif rows[0]["user_id"] != session["user_id"]:
+        elif characters[0]["user_id"] != session["user_id"]:
             return error("forbidden", 403)
+        
+        # Query database for attacks
+        with sqlite3.connect(database) as conn:
+            conn.row_factory = sqlite3.Row
+            cur = conn.cursor()
+            cur.execute(
+                "SELECT * FROM attacks WHERE character_id = ?",
+                (character_id,)
+            )
+            attacks = [dict(row) for row in cur.fetchall()]
 
-        return render_template("character_edit.html", character=rows[0])
+        return render_template("character_edit.html", character=characters[0], attacks=attacks)
     
 
 @app.route("/character_list")
@@ -324,16 +397,31 @@ def party_invitation(party_id):
             )
             rows = [dict(row) for row in cur.fetchall()]
 
-        # Ensure character exists
+        # Ensure user exists
         if len(rows) != 1:
             return error("not found", 404)
+        invited_user_id = rows[0]["id"]
+        
+        # Query database for invitations
+        with sqlite3.connect(database) as conn:
+            conn.row_factory = sqlite3.Row
+            cur = conn.cursor()
+            cur.execute(
+                "SELECT * FROM invitations WHERE party_id = ? AND user_id = ? AND status = ?",
+                (party_id, invited_user_id, "pending")
+            )
+            rows = [dict(row) for row in cur.fetchall()]
+
+        # Ensure user was not already invited
+        if len(rows) > 0:
+            return error("duplicate invitation pending", 404)
 
         # Submit invitation to database
         with sqlite3.connect(database) as conn:
             cur = conn.cursor()
             cur.execute(
-                "INSERT INTO invitations (party_id, user_id) VALUES (?, ?)",
-                (party_id, rows[0]["id"])
+                "INSERT INTO invitations (party_id, user_id, status) VALUES (?, ?, ?)",
+                (party_id, invited_user_id, "pending")
             )
             conn.commit()
 
@@ -358,97 +446,145 @@ def party_invitation(party_id):
             return error("not found", 404)
 
         return render_template("party_invitation.html", party=rows[0])
+    
 
-
-@app.route("/party/<party_id>/invitation_response", methods=["GET", "POST"])
+@app.route("/invitation/<invitation_id>", methods=["GET"])
 @login_required
-def party_invitation_response(party_id):
+def party_invitation_response(invitation_id):
     """Show invitation details"""
 
-    # User reached route via POST (as by submitting a form via POST)
-    if request.method == "POST":
+    # Query database for invitations
+    with sqlite3.connect(database) as conn:
+        conn.row_factory = sqlite3.Row
+        cur = conn.cursor()
+        cur.execute(
+        "SELECT * FROM invitations JOIN parties ON invitations.party_id = parties.id WHERE user_id = ? AND invitations.id = ? AND status = ?",
+            (session["user_id"], invitation_id, "pending")
+        )
+        invitation = [dict(row) for row in cur.fetchall()]
 
-        # Ensure fields were submitted
-        if not request.form.get("character_id"):
-            return error("must select character", 400)
-
-        # Query database for character
-        with sqlite3.connect(database) as conn:
-            conn.row_factory = sqlite3.Row
-            cur = conn.cursor()
-            cur.execute(
-                "SELECT * FROM characters WHERE id = ?",
-                (request.form.get("character_id"),)
-            )
-            character = [dict(row) for row in cur.fetchall()]
-
-        # Ensure character exists
-        if len(character) != 1:
-            return error("not found", 404)
-        
-        # Query database for invitation
-        with sqlite3.connect(database) as conn:
-            conn.row_factory = sqlite3.Row
-            cur = conn.cursor()
-            cur.execute(
-                "SELECT * FROM invitations JOIN parties ON invitations.party_id = parties.id WHERE user_id = ? AND parties.id = ?",
-                (session["user_id"], party_id)
-            )
-            invitations = [dict(row) for row in cur.fetchall()]
-
-        # Ensure invitation exists
-        if len(invitations) != 1:
-            return error("not found", 404)
-
-        # Add character to party
-        with sqlite3.connect(database) as conn:
-            cur = conn.cursor()
-            cur.execute(
-                "INSERT INTO players (party_id, character_id, initiative, current_hitpoints) VALUES (?, ?, ?, ?)",
-                (party_id, character[0]["id"], None, character[0]["max_hitpoints"])
-            )
-            conn.commit()
-
-        # Remove invitation
-        with sqlite3.connect(database) as conn:
-            cur = conn.cursor()
-            cur.execute(
-                "DELETE FROM invitations WHERE party_id = ? AND user_id = ?",
-                (party_id, session["user_id"])
-            )
-            conn.commit()
-
-        # Redirect user to party page
-        return redirect("/party/" + str(party_id))
-
-    # User reached route via GET (as by clicking a link or via redirect)
-    else:
-
-        # Query database for invitations
-        with sqlite3.connect(database) as conn:
-            conn.row_factory = sqlite3.Row
-            cur = conn.cursor()
-            cur.execute(
-            "SELECT * FROM invitations JOIN parties ON invitations.party_id = parties.id WHERE user_id = ? AND parties.id = ?",
-                (session["user_id"], party_id)
-            )
-            rows = [dict(row) for row in cur.fetchall()]
-
-        # Ensure invitation exists
-        if len(rows) != 1:
-            return error("not found", 404)
+    # Ensure invitation exists
+    if len(invitation) != 1:
+        return error("not found", 404)
     
-        # Query database for characters
-        with sqlite3.connect(database) as conn:
-            conn.row_factory = sqlite3.Row
-            cur = conn.cursor()
-            cur.execute(
-                "SELECT * FROM characters WHERE user_id = ?",
-                (session["user_id"],)
-            )
-            characters = [dict(row) for row in cur.fetchall()]
+    # Query database for characters in party
+    with sqlite3.connect(database) as conn:
+        conn.row_factory = sqlite3.Row
+        cur = conn.cursor()
+        cur.execute(
+        "SELECT * FROM players JOIN characters ON character_id = characters.id JOIN users ON characters.user_id = users.id WHERE party_id = ?",
+            (invitation[0]["party_id"],)
+        )
+        party_characters = [dict(row) for row in cur.fetchall()]
+    
+    # Query database for characters
+    with sqlite3.connect(database) as conn:
+        conn.row_factory = sqlite3.Row
+        cur = conn.cursor()
+        cur.execute(
+            "SELECT * FROM characters WHERE user_id = ?",
+            (session["user_id"],)
+        )
+        characters = [dict(row) for row in cur.fetchall()]
 
-        return render_template("party_invitation_response.html", invitation=rows[0], characters=characters)
+    return render_template("party_invitation_response.html", invitation=invitation[0], characters=characters, party_characters=party_characters)
+
+
+@app.route("/invitation/<invitation_id>/accepted", methods=["POST"])
+@login_required
+def party_invitation_response_accepted(invitation_id):
+    """Handle accepted invitation"""
+
+    # Query database for invitation
+    with sqlite3.connect(database) as conn:
+        conn.row_factory = sqlite3.Row
+        cur = conn.cursor()
+        cur.execute(
+            "SELECT * FROM invitations JOIN parties ON invitations.party_id = parties.id WHERE user_id = ? AND invitations.id = ? AND status = ?",
+            (session["user_id"], invitation_id, "pending")
+        )
+        invitations = [dict(row) for row in cur.fetchall()]
+
+    # Ensure invitation exists
+    if len(invitations) != 1:
+        return error("invitation not found", 404)
+
+    # Ensure fields were submitted
+    if not request.form.get("character_id"):
+        return error("must select character", 400)
+
+    # Query database for character
+    with sqlite3.connect(database) as conn:
+        conn.row_factory = sqlite3.Row
+        cur = conn.cursor()
+        cur.execute(
+            "SELECT * FROM characters WHERE id = ?",
+            (request.form.get("character_id"),)
+        )
+        character = [dict(row) for row in cur.fetchall()]
+
+    # Ensure character exists
+    if len(character) != 1:
+        return error("not found", 404)
+        
+    # Add character to party
+    with sqlite3.connect(database) as conn:
+        cur = conn.cursor()
+        cur.execute(
+            "INSERT INTO players (party_id, character_id, initiative, current_hitpoints) VALUES (?, ?, ?, ?)",
+            (invitations[0]["party_id"], character[0]["id"], None, character[0]["max_hitpoints"])
+        )
+        conn.commit()
+
+    # Set invitation as accepted
+    with sqlite3.connect(database) as conn:
+        cur = conn.cursor()
+        cur.execute(
+            "UPDATE invitations SET status = ? WHERE invitations.id = ?",
+            ("accepted", invitation_id)
+        )
+        conn.commit()
+
+    # Redirect user to party page
+    return redirect("/party/" + str(invitations[0]["party_id"]))
+        
+
+@app.route("/invitation/<invitation_id>/denied", methods=["POST"])
+@login_required
+def party_invitation_response_denied(invitation_id):
+    """handle denied or cancelled invitation"""
+
+    # Query database for invitation
+    with sqlite3.connect(database) as conn:
+        conn.row_factory = sqlite3.Row
+        cur = conn.cursor()
+        cur.execute(
+            "SELECT * FROM invitations WHERE invitations.id = ?",
+            (invitation_id,)
+        )
+        invitations = [dict(row) for row in cur.fetchall()]
+
+    # Ensure invitation exists
+    if len(invitations) != 1:
+        return error("not found", 404)
+    
+    # Determine invitation status
+    if session["user_id"] == invitations[0]["user_id"]:
+        status = "denied"
+    else:
+        status = "cancelled"
+
+    # Set invitation as denied or cancelled
+    with sqlite3.connect(database) as conn:
+        cur = conn.cursor()
+        cur.execute(
+            "UPDATE invitations SET status = ? WHERE invitations.id = ?",
+            (status, invitation_id)
+        )
+        conn.commit()
+            
+    # Redirect user to index page
+    return redirect("/")
 
 
 @app.route("/party_list")
@@ -466,8 +602,6 @@ def party_list():
         parties = [dict(row) for row in cur.fetchall()]
 
     return render_template("party_list.html", parties=parties)
-
-
 
 
 @app.route("/creature")
