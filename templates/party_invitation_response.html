@@ -5,17 +5,53 @@
 {% endblock %}
 
 {% block main %}
-    <form action="/party/{{ invitation.party_id }}/invitation_response" method="post">
-        <div class="mb-3">
-            <select class="form-control mx-auto w-auto" name="character_id" placeholder="Select character">
-                {% for character in characters %}
-                    <option value="{{ character.id }}">
-                        {{ character.name }}
-                    </option>
-                {% endfor %}
-            </select>
-            <input autocomplete="off" hidden class="form-control mx-auto w-auto" name="party_id" value="{{ invitation.party_id }}" type="text">
-        </div>
-        <button class="btn btn-primary" type="submit">Confirm</button>
-    </form>
+    <input autocomplete="off" hidden class="form-control mx-auto w-auto" name="party_id" value="{{ invitation.party_id }}" type="text">
+
+    <h2>Characters in {{ invitation.name }}</h2>
+    
+    <table>
+
+        <thead>
+            <tr>
+                <th>Username</th>
+                <th>Character</th>
+            </tr>
+        </thead>
+
+        <tbody>
+            {% for character in party_characters %}
+                <tr>
+                    <td>{{ character.username }}</td>
+                    <td>{{ character.name }}</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+
+    </table>
+
+    {% if characters %}
+
+        <p>Join party with character:</p>
+
+        <form action="/invitation/{{ invitation.id }}/accepted" method="post">
+            <div class="mb-3">
+                <select class="form-control mx-auto w-auto" name="character_id" placeholder="Select character">
+                    {% for character in characters %}
+                        <option value="{{ character.id }}">
+                            {{ character.name }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <button class="btn btn-primary" type="submit">Accept</button>
+        </form>
+        <form action="/invitation/{{ invitation.id }}/denied" method="post">
+            <button class="btn btn-primary" type="submit">Deny</button>
+        </form>
+
+    {% else %}
+
+        <p>Please create a character before responding to this party invitation.</p>
+
+    {% endif %}
 {% endblock %}

@@ -71,29 +71,49 @@
         <button class="btn btn-primary" type="submit">New Party</button>
     </form>
 
-    <h2>My Invites</h2>
+    <h2>Party Invitations</h2>
 
     <table>
 
         <thead>
             <tr>
-                <th>DM</th>
-                <th>Id</th>
-                <th>Name</th>
+                <th>From</th>
+                <th>To</th>
+                <th>Party</th>
+                <th>Status</th>
             </tr>
         </thead>
 
         <tbody>
-            {% for invitation in invitations %}
+            {% for received_invitation in received_invitations %}
                 <tr>
-                    <td>{{ invitation.dm_id }}</td>
-                    <td>{{ invitation.id }}</td>
-                    <td>{{ invitation.name }}</td>
-                    <td>
-                        <form action="/party/{{ invitation.id }}/invitation_response" method="get">
-                            <button class="btn btn-primary" type="submit">View</button>
-                        </form>
-                    </td>
+                    <td>{{ received_invitation.username }}</td>
+                    <td>Me</td>
+                    <td>{{ received_invitation.name }}</td>
+                    <td>{{ received_invitation.status }}</td>
+                    {% if received_invitation.status == "pending" %}
+                        <td>
+                            <form action="/invitation/{{ received_invitation.id }}" method="get">
+                                <button class="btn btn-primary" type="submit">View</button>
+                            </form>
+                        </td>
+                    {% endif %}
+                </tr>
+            {% endfor %}
+
+            {% for sent_invitation in sent_invitations %}
+                <tr>
+                    <td>Me</td>
+                    <td>{{ sent_invitation.username }}</td>
+                    <td>{{ sent_invitation.name }}</td>
+                    <td>{{ sent_invitation.status }}</td>
+                    {% if sent_invitation.status == "pending" %}
+                        <td>
+                            <form action="/invitation/{{ sent_invitation.id }}/denied" method="post">
+                                <button class="btn btn-primary" type="submit">Cancel</button>
+                            </form>
+                        </td>
+                    {% endif %}
                 </tr>
             {% endfor %}
         </tbody>
