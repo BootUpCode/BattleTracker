@@ -16,7 +16,6 @@
     {% endif %}
 
     <form action="/character/{{ character.id }}/edit" method="post">
-        <input id="new_attack_count" name="new_attack_count" hidden type="number" value="0">
         <table>
             <tbody>
                 <tr>
@@ -24,59 +23,182 @@
                     <td><input name="name" value="{{ character.name }}" type="text" class="form-control mx-auto w-auto" autocomplete="off" required autofocus></td>
                 </tr>
                 <tr>
+                    <td>Background:</td>
+                    <td><input name="background" value="{{ character.background }}" type="text" class="form-control mx-auto w-auto" autocomplete="off" required></td>
+                </tr>
+                <tr>
+                    <td>Species:</td>
+                    <td><input name="species" value="{{ character.species }}" type="text" class="form-control mx-auto w-auto" autocomplete="off" required></td>
+                </tr>
+                <tr>
+                    <td>Class & Level:</td>
+                    <td><input name="class" value="{{ character.class }}" type="text" class="form-control mx-auto w-auto" autocomplete="off" required></td>
+                </tr>
+
+
+                <tr>
                     <td>Proficiency Bonus:</td>
                     <td><input name="prof_bonus" value="{{ character.prof_bonus }}" type="number" class="form-control mx-auto w-auto" autocomplete="off" required></td>
                 </tr>
                 <tr>
+                    <td>Initiative Bonus:</td>
+                    <td><input name="prof_bonus" value="{{ character.initiative_bonus }}" type="number" class="form-control mx-auto w-auto" autocomplete="off" required></td>
+                </tr>
+                <tr>
+                    <td>Speed:</td>
+                    <td><input name="prof_bonus" value="{{ character.speed }}" type="number" class="form-control mx-auto w-auto" autocomplete="off" required></td>
+                </tr>
+                <tr>
+                    <td>Size:</td>
+                    <td><input name="prof_bonus" value="{{ character.size }}" type="text" class="form-control mx-auto w-auto" autocomplete="off" required></td>
+                </tr>
+
+                <tr>
                     <td>Hit Point Maximum:</td>
                     <td><input name="max_hitpoints" value="{{ character.max_hitpoints }}" type="number" class="form-control mx-auto w-auto" autocomplete="off" required></td>
                 </tr>
+
+                
+                
             </tbody>
         </table>
 
         <table id="attackTable">
+            <input id="new_attack_name_tags" name="new_attack_name_tags" hidden type="text">
             <thead>
                 <tr>
+                    <th>Name</th>
                     <th>Attack</th>
+                    <th></th>
+                    <th></th>
+                    <th>Damage</th>
+                </tr>
+                <tr>
+                    <th></th>
+                    <th>Proficient</th>
+                    <th>Attribute</th>
+                    <th>Bonus</th>
+                    <th>Dice Number</th>
+                    <th>Dice Size</th>
                     <th>Bonus</th>
                 </tr>
             </thead>
             <tbody>
                 {% for attack in attacks %}
-                <tr>
-                    <td><input name="attack_name_{{ attack.id }}" value="{{ attack.name }}"type="text" class="form-control mx-auto w-auto" autocomplete="off" required></td>
-                    <td><input name="attack_bonus_{{ attack.id }}" value="{{ attack.bonus }}"type="number" class="form-control mx-auto w-auto" autocomplete="off" required></td>
-                    <td><button type=button onclick=deleteAttackFunction(this) class='btn btn-primary'>Delete</button></td>
-                </tr>
+                    <tr>
+                        <td><input name="attack_name_{{ attack.id }}" value="{{ attack.name }}"type="text" class="form-control mx-auto w-auto" autocomplete="off" required></td>
+                        <td><input name="attack_proficient_{{ attack.id }}" value="{{ attack.proficient }}"type="number" class="form-control mx-auto w-auto" autocomplete="off" required></td>
+                        <td><select class="form-control mx-auto w-auto" name="attack_attribute_{{ attack.id }}" required>
+                            <option value="None" selected="selected">None</option>
+                            <option value="STR">STR</option>
+                            <option value="DEX">DEX</option>
+                            <option value="CON">CON</option>
+                            <option value="INT">INT</option>
+                            <option value="WIS">WIS</option>
+                            <option value="CHA">CHA</option></select></td>
+                        <td><input name="attack_attack_bonus_{{ attack.id }}" value="{{ attack.attack_bonus }}"type="number" class="form-control mx-auto w-auto" autocomplete="off" required></td>
+                        <td><input name="attack_damage_dice_number_{{ attack.id }}" value="{{ attack.damage_dice_number }}"type="number" class="form-control mx-auto w-auto" autocomplete="off" required></td>
+                        <td><input name="attack_damage_dice_size_{{ attack.id }}" value="{{ attack.damage_dice_size }}"type="number" class="form-control mx-auto w-auto" autocomplete="off" required></td>
+                        <td><input name="attack_damage_bonus_{{ attack.id }}" value="{{ attack.damage_bonus }}"type="number" class="form-control mx-auto w-auto" autocomplete="off" required></td>
+                        <td><button type="button" onclick="deleteRowFunction(this)" class="btn btn-primary">Delete</button></td>
+                    </tr>
                 {% endfor %}
             </tbody>
         </table>
 
         <button type="button" onclick="createAttackFunction()" class="btn btn-primary">New Attack</button>
 
+        <table id="resourceTable">
+            <input id="new_resource_name_tags" name="new_resource_name_tags" hidden type="text">
+            <thead>
+                <tr>
+                    <th>Resource</th>
+                    <th>Description</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for resource in resources %}
+                    <tr>
+                        <td><input name="resource_name_{{ resource.id }}" value="{{ resource.name }}"type="text" class="form-control mx-auto w-auto" autocomplete="off" required></td>
+                        <td><input name="resource_description_{{ resource.id }}" value="{{ resource.description }}"type="text" class="form-control mx-auto w-auto" autocomplete="off" required></td>
+                        <td><button type="button" onclick="deleteRowFunction(this)" class="btn btn-primary">Delete</button></td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <button type="button" onclick="createResourceFunction()" class="btn btn-primary">New Resource</button>
 
         <button type="submit" class="btn btn-primary">Confirm</button>
     </form>
 
     <script>
-        var newAttackCount = 0;
+        var newAttackNameTags = [];
+        var newResourceNameTags = [];
 
         function createAttackFunction() {
+            var newAttackNameTag = 0;
+            if (newAttackNameTags.length > 0)
+                {
+                    newAttackNameTag = newAttackNameTags[newAttackNameTags.length - 1] + 1;
+                }
+            newAttackNameTags[newAttackNameTags.length] = newAttackNameTag;
+            document.getElementById("new_attack_name_tags").value = newAttackNameTags.toString();
+
             var table = document.getElementById("attackTable");
+            var row = table.insertRow(table.rows.length);
+            var cell0 = row.insertCell(0);
+            var cell1 = row.insertCell(1);
+            var cell2 = row.insertCell(2);
+            var cell3 = row.insertCell(3);
+            var cell4 = row.insertCell(4);
+            var cell5 = row.insertCell(5);
+            var cell6 = row.insertCell(6);
+            var cell7 = row.insertCell(7);
+
+            cell0.innerHTML = "<input name='attack_name_new_" + newAttackNameTag + "' type='text' class='form-control mx-auto w-auto' autocomplete='off' required>";
+            cell1.innerHTML = "<input name='attack_proficient_new_" + newAttackNameTag + "' type='number' class='form-control mx-auto w-auto' autocomplete='off' required>";
+            cell2.innerHTML = "<select name='attack_attribute_new_" + newAttackNameTag + "' class='form-control mx-auto w-auto' required><option value='None' selected='selected'>None</option><option value='STR'>STR</option><option value='DEX'>DEX</option><option value='CON'>CON</option><option value='INT'>INT</option><option value='WIS'>WIS</option><option value='CHA'>CHA</option></select>"
+            cell3.innerHTML = "<input name='attack_attack_bonus_new_" + newAttackNameTag + "' 'type='number' class='form-control mx-auto w-auto' autocomplete='off' required>"
+            cell4.innerHTML = "<input name='attack_damage_dice_number_new_" + newAttackNameTag + "' 'type='number' class='form-control mx-auto w-auto' autocomplete='off' required>"
+            cell5.innerHTML = "<input name='attack_damage_dice_size_new_" + newAttackNameTag + "' 'type='number' class='form-control mx-auto w-auto' autocomplete='off' required>"
+            cell6.innerHTML = "<input name='attack_damage_bonus_new_" + newAttackNameTag + "' 'type='number' class='form-control mx-auto w-auto' autocomplete='off' required>"
+            cell7.innerHTML = "<button type=button onclick=deleteRowFunction(this) class='btn btn-primary'>Delete</button>"
+        }
+
+        function createResourceFunction() {
+            var newResourceNameTag = 0;
+            if (newResourceNameTags.length > 0)
+                {
+                    newResourceNameTag = newResourceNameTags[newResourceNameTags.length - 1] + 1;
+                }
+            newResourceNameTags[newResourceNameTags.length] = newResourceNameTag;
+            document.getElementById("new_resource_name_tags").value = newResourceNameTags.toString();
+
+            var table = document.getElementById("resourceTable");
             var row = table.insertRow(table.rows.length);
             var cell1 = row.insertCell(0);
             var cell2 = row.insertCell(1);
             var cell3 = row.insertCell(2);
-            cell1.innerHTML = "<input name='new_attack_name_" + newAttackCount + "' type='text' class='form-control mx-auto w-auto' autocomplete='off' required></input>";
-            cell2.innerHTML = "<input name='new_attack_bonus_" + newAttackCount + "' type='number' class='form-control mx-auto w-auto' autocomplete='off' required></input>";
-            cell3.innerHTML = "<button type=button onclick=deleteAttackFunction(this) class='btn btn-primary'>Delete</button>"
-            newAttackCount++;
-            document.getElementById("new_attack_count").value = newAttackCount;
+            cell1.innerHTML = "<input name='new_resource_name_" + newResourceNameTag + "' type='text' class='form-control mx-auto w-auto' autocomplete='off' required></input>";
+            cell2.innerHTML = "<input name='new_resource_description_" + newResourceNameTag + "' type='text' class='form-control mx-auto w-auto' autocomplete='off' required></input>";
+            cell3.innerHTML = "<button type='button' onclick='deleteRowFunction(this)' class='btn btn-primary'>Delete</button>"
         }
 
-        function deleteAttackFunction(r) {
-            var i = r.parentNode.parentNode.rowIndex;
-            document.getElementById("attackTable").deleteRow(i);
+        function deleteRowFunction(htmlElementNode) {
+            var i = 0;
+            while (htmlElementNode) {
+                htmlElementNode = htmlElementNode.parentNode;
+                if (htmlElementNode.tagName.toLowerCase() === 'tr') 
+                {
+                    i = htmlElementNode.rowIndex;
+                }
+                else if (htmlElementNode.tagName.toLowerCase() === 'table' && i > 0)
+                {
+                    htmlElementNode.deleteRow(i);
+                }
+            }
         }
+
 </script>
 {% endblock %}
