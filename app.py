@@ -30,9 +30,10 @@ Session(app)
     # resources: id, character_id, name, number, refresh time (for hit dice, spell slots, class abilities, item charges)
         # Add: max_charges, refresh
         # Add separate database table for tracking number of charges based on player id
-    # attacks: id, character_id, name, bonus, damage, type, range
-        # Add: proficient, attribute, damage_dice_number, damage_dice_size, damage_bonus
-    # features: character id, name, description
+    # attacks:
+        # Add: range
+        # Switch: to damage: id, attack_id, damage_dice_number, damage_dice_size, damage_bonus, damage_type
+    # new/edit character use same code?
 # - button to sort based on initiative for DM
 
 # CREATURES
@@ -108,40 +109,6 @@ def view_character(character_id):
         return error("not found", 404)
 
     return render_template("character.html", character=rows[0], user=session["user_id"])
-
-
-@app.route("/character/new/edit", methods=["GET", "POST"])
-@login_required
-def new_character():
-    """New character"""
-
-    # User reached route via POST (as by submitting a form via POST)
-    if request.method == "POST":
-
-        # Ensure fields were submitted
-        if not request.form.get("name"):
-            return error("must provide character name", 400)
-        if not request.form.get("prof_bonus", type=int) or not request.form.get("max_hitpoints", type=int):
-            return error("invalid input", 400)
-
-        # Submit character to database
-        with sqlite3.connect(database) as conn:
-            cur = conn.cursor()
-            cur.execute(
-                "INSERT INTO characters (name, user_id, prof_bonus, max_hitpoints) VALUES (?, ?, ?, ?) RETURNING id",
-                (request.form.get("name"), session["user_id"], int(request.form.get("prof_bonus")), int(request.form.get("max_hitpoints")))
-            )
-            character_id = cur.fetchone()[0]
-            conn.commit()
-
-        # Redirect user to character page
-        return redirect("/character/" + str(character_id))
-
-    # User reached route via GET (as by clicking a link or via redirect)
-    else:
-        new_character = {"id":"new"}
-
-        return render_template("character_edit.html", character=new_character)
     
 
 @app.route("/character/<character_id>/edit", methods=["GET", "POST"])
@@ -152,6 +119,7 @@ def edit_character(character_id):
     # User reached route via POST (as by submitting a form via POST)
     if request.method == "POST":
 
+        # --- Character Data ---
         # Get form data for character
         character = {"name" : request.form.get("name"), 
                      "background" : request.form.get("background"), 
@@ -167,15 +135,29 @@ def edit_character(character_id):
         if None in character.values():
             return error("missing input", 400)
         
-        # Update character in database
-        with sqlite3.connect(database) as conn:
-            cur = conn.cursor()
-            cur.execute(
-                "UPDATE characters SET name = ?, background = ?, species = ?, class = ?, prof_bonus = ?, initiative_bonus = ?, speed = ?, size = ?, max_hitpoints = ? WHERE id = ? AND user_id = ?",
-                (character["name"], character["background"], character["species"], character["class"], character["prof_bonus"], character["initiative_bonus"], character["speed"], character["size"], character["max_hitpoints"], character_id, session["user_id"])
-            )
-            conn.commit()
+        # Insert or update character in database
+        if character_id == "new":
+            # Insert new character
+            with sqlite3.connect(database) as conn:
+                cur = conn.cursor()
+                cur.execute(
+                    "INSERT INTO characters (name, background, species, class, prof_bonus, initiative_bonus, speed, size, max_hitpoints, user_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING id",
+                    (character["name"], character["background"], character["species"], character["class"], character["prof_bonus"], character["initiative_bonus"], character["speed"], character["size"], character["max_hitpoints"], session["user_id"])
+                )
+                character_id = cur.fetchone()[0]
+                conn.commit()
+
+        else:
+            # Update existing character
+            with sqlite3.connect(database) as conn:
+                cur = conn.cursor()
+                cur.execute(
+                    "UPDATE characters SET name = ?, background = ?, species = ?, class = ?, prof_bonus = ?, initiative_bonus = ?, speed = ?, size = ?, max_hitpoints = ? WHERE id = ? AND user_id = ?",
+                    (character["name"], character["background"], character["species"], character["class"], character["prof_bonus"], character["initiative_bonus"], character["speed"], character["size"], character["max_hitpoints"], character_id, session["user_id"])
+                )
+                conn.commit()
         
+        # --- Attack Data ---
         # Query database for attacks
         with sqlite3.connect(database) as conn:
             conn.row_factory = sqlite3.Row
@@ -191,22 +173,19 @@ def edit_character(character_id):
         # Add form nametags for new attacks
         if request.form.get("new_attack_name_tags"):
             for i in request.form.get("new_attack_name_tags").split(","):
-                attacks.append({"nametag" : "new_" + str(i), "new" : True})
-        # Add form nametags and database id for pre-existing attacks
+                attacks.append({"nametag" : str(i), "new" : True})
+        # Add form database id and nametags for pre-existing attacks
         for existing_attack in existing_attacks:
             attacks.append({"nametag": str(existing_attack["id"]), "new" : False, "id" : str(existing_attack["id"])})
 
         # Add form data for attacks to dictionaries using form nametags
         for attack in attacks:
-            attack["name"] = request.form.get("attack_name_" + attack["nametag"])
-            attack["attack_bonus"] = request.form.get("attack_attack_bonus_" + attack["nametag"])
-            attack["proficient"] = request.form.get("attack_proficient_" + attack["nametag"])
-            attack["attribute"] = request.form.get("attack_attribute_" + attack["nametag"])
-            attack["damage_dice_number"] = request.form.get("attack_damage_dice_number_" + attack["nametag"])
-            attack["damage_dice_size"] = request.form.get("attack_damage_dice_size_" + attack["nametag"])
-            attack["damage_bonus"] = request.form.get("attack_damage_bonus_" + attack["nametag"])
+            attack["name"] = request.form.get(attack["nametag"] + "_attack_name")
+            attack["proficient"] = request.form.get(attack["nametag"] + "_attack_proficient")
+            attack["attribute"] = request.form.get(attack["nametag"] + "_attack_attribute")
+            attack["attack_bonus"] = request.form.get(attack["nametag"] + "_attack_bonus")
             attack["retrieved"] = False
-            # Check if all form data was succesfully retrieved
+            # Check if all attack form data was succesfully retrieved
             if not None in attack.values():
                 attack["retrieved"] = True
 
@@ -217,8 +196,8 @@ def edit_character(character_id):
                 with sqlite3.connect(database) as conn:
                     cur = conn.cursor()
                     cur.execute(
-                        "UPDATE attacks SET name = ?, attack_bonus = ?, proficient = ?, attribute = ?, damage_dice_number = ?, damage_dice_size = ?, damage_bonus = ? WHERE id = ? AND character_id = ?",
-                        (attack["name"], attack["attack_bonus"], attack["proficient"], attack["attribute"], attack["damage_dice_number"], attack["damage_dice_size"], attack["damage_bonus"], attack["id"], character_id)
+                        "UPDATE attacks SET name = ?, attack_bonus = ?, proficient = ?, attribute = ? WHERE id = ? AND character_id = ?",
+                        (attack["name"], attack["attack_bonus"], attack["proficient"], attack["attribute"], attack["id"], character_id)
                     )
                     conn.commit()
             # Delete if attack was pre-existing and no longer present on the form
@@ -235,76 +214,89 @@ def edit_character(character_id):
                 with sqlite3.connect(database) as conn:
                     cur = conn.cursor()
                     cur.execute(
-                        "INSERT INTO attacks (name, attack_bonus, proficient, attribute, damage_dice_number, damage_dice_size, damage_bonus, character_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
-                        (attack["name"], attack["attack_bonus"], attack["proficient"], attack["attribute"], attack["damage_dice_number"], attack["damage_dice_size"], attack["damage_bonus"], character_id)
+                        "INSERT INTO attacks (name, attack_bonus, proficient, attribute, character_id) VALUES (?, ?, ?, ?, ?) RETURNING id",
+                        (attack["name"], attack["attack_bonus"], attack["proficient"], attack["attribute"], character_id)
+                    )
+                    attack["id"] = cur.fetchone()[0]
+                    conn.commit()
+            # Delete from attack list if attack is new and no longer present on the form
+            elif attack["new"] and not attack["retrieved"]:
+                attacks.remove(attack)
+
+        # --- Damage Data ---
+        # Query database for damages
+        existing_damages = []
+        for attack in attacks:
+            with sqlite3.connect(database) as conn:
+                conn.row_factory = sqlite3.Row
+                cur = conn.cursor()
+                cur.execute(
+                    "SELECT * FROM damages WHERE attack_id = ?",
+                    (attack["id"],)
+                )
+                attack_damages = [dict(row) for row in cur.fetchall()]
+            for attack_damage in attack_damages:
+                if attack_damage["id"]:
+                    existing_damages.extend(attack_damages)
+
+        # Create list containing dictionaries for newly added and pre-existing damages
+        damages = []
+        # Add form nametags and attack id for new damages
+        if request.form.get("new_damage_name_tags"):
+            for i in request.form.get("new_damage_name_tags").split(","):
+                try:
+                    attack_id = list(filter(lambda attack: attack["nametag"] == str(i).split(".")[0], attacks))[0]["id"]
+                    damages.append({"nametag" : str(i), "new" : True, "attack_id" : attack_id})
+                except:
+                    continue
+        # Add form nametags and database id for pre-existing damages
+        for existing_damage in existing_damages:
+            damages.append({"nametag": str(existing_damage["attack_id"]) + "." + str(existing_damage["id"]), "new" : False, "id" : str(existing_damage["id"]), "attack_id" : str(existing_damage["attack_id"])})
+
+        # Add form data for damages to dictionaries using form nametags
+        for damage in damages:
+            damage["dice_number"] = request.form.get(damage["nametag"] + "_damage_dice_size")
+            damage["dice_size"] = request.form.get(damage["nametag"] + "_damage_dice_size")
+            damage["damage_bonus"] = request.form.get(damage["nametag"] + "_damage_bonus")
+            damage["type"] = request.form.get(damage["nametag"] + "_damage_type")
+            damage["retrieved"] = False
+            # Check if all damage form data was succesfully retrieved
+            if not None in damage.values():
+                damage["retrieved"] = True
+
+        # Update, delete or insert damages in database
+        for damage in damages:
+            # Update if damage was pre-existing and still present on the form
+            if not damage["new"] and damage["retrieved"]:
+                with sqlite3.connect(database) as conn:
+                    cur = conn.cursor()
+                    cur.execute(
+                        "UPDATE damages SET dice_number = ?, dice_size = ?, damage_bonus = ?, type = ? WHERE id = ? AND attack_id = ?",
+                        (damage["dice_number"], damage["dice_size"], damage["damage_bonus"], damage["type"], damage["id"], damage["attack_id"])
                     )
                     conn.commit()
+            # Delete if damage was pre-existing and no longer present on the form
+            elif not damage["new"] and not damage["retrieved"]:
+                with sqlite3.connect(database) as conn:
+                    cur = conn.cursor()
+                    cur.execute(
+                        "DELETE FROM damages WHERE id = ?",
+                        (damage["id"],)
+                    )
+                    conn.commit()
+            # Insert if damage is new and present on the form
+            elif damage["new"] and damage["retrieved"]:
+                with sqlite3.connect(database) as conn:
+                    cur = conn.cursor()
+                    cur.execute(
+                        "INSERT INTO damages (dice_number, dice_size, damage_bonus, type, attack_id) VALUES (?, ?, ?, ?, ?) RETURNING id",
+                        (damage["dice_number"], damage["dice_size"], damage["damage_bonus"], damage["type"], damage["attack_id"])
+                    )
+                    damage["id"] = cur.fetchone()[0]
+                    conn.commit()
 
+        # --- Resource Data ---
         # Query database for resources
-        with sqlite3.connect(database) as conn:
-            conn.row_factory = sqlite3.Row
-            cur = conn.cursor()
-            cur.execute(
-                "SELECT * FROM resources WHERE character_id = ?",
-                (character_id,)
-            )
-            resources = [dict(row) for row in cur.fetchall()]
-
-        # Update or delete existing resources in database
-        for resource in resources:
-            if request.form.get("resource_name_" + str(resource["id"])) and request.form.get("resource_description_" + str(resource["id"])):
-                with sqlite3.connect(database) as conn:
-                    cur = conn.cursor()
-                    cur.execute(
-                        "UPDATE resources SET name = ?, description = ? WHERE id = ? AND character_id = ?",
-                        (request.form.get("resource_name_" + str(resource["id"])), request.form.get("resource_description_" + str(resource["id"])), resource["id"], character_id)
-                    )
-                    conn.commit()
-            else:
-                with sqlite3.connect(database) as conn:
-                    cur = conn.cursor()
-                    cur.execute(
-                        "DELETE FROM resources WHERE id = ? AND character_id = ?",
-                        (resource["id"], character_id)
-                    )
-                    conn.commit()
-
-        # Insert new resources in database
-        if request.form.get("new_resource_ids"):
-            for i in request.form.get("new_resource_ids").split(","):
-                if request.form.get("new_resource_name_" + str(i)) and request.form.get("new_resource_description_" + str(i)):
-                    with sqlite3.connect(database) as conn:
-                        cur = conn.cursor()
-                        cur.execute(
-                            "INSERT INTO resources (name, description, character_id) VALUES (?, ?, ?)",
-                            (request.form.get("new_resource_name_" + str(i)), request.form.get("new_resource_description_" + str(i)), character_id)
-                        )
-                        conn.commit()
-
-        # Redirect user to character page
-        return redirect("/character/" + str(character_id))
-
-    # User reached route via GET (as by clicking a link or via redirect)
-    else:
-
-        # Query database for character
-        with sqlite3.connect(database) as conn:
-            conn.row_factory = sqlite3.Row
-            cur = conn.cursor()
-            cur.execute(
-                "SELECT * FROM characters WHERE id = ?",
-                (character_id,)
-            )
-            characters = [dict(row) for row in cur.fetchall()]
-
-        # Ensure character exists
-        if len(characters) != 1:
-            return error("not found", 404)
-        # Ensure character is owned by current user
-        elif characters[0]["user_id"] != session["user_id"]:
-            return error("forbidden", 403)
-        
-        # Query database for attacks
         with sqlite3.connect(database) as conn:
             conn.row_factory = sqlite3.Row
             cur = conn.cursor()
@@ -312,19 +304,122 @@ def edit_character(character_id):
                 "SELECT * FROM attacks WHERE character_id = ?",
                 (character_id,)
             )
-            attacks = [dict(row) for row in cur.fetchall()]
+            existing_resources = [dict(row) for row in cur.fetchall()]
 
-        # Query database for resources
-        with sqlite3.connect(database) as conn:
-            conn.row_factory = sqlite3.Row
-            cur = conn.cursor()
-            cur.execute(
-                "SELECT * FROM resources WHERE character_id = ?",
-                (character_id,)
-            )
-            resources = [dict(row) for row in cur.fetchall()]
+        # Create list containing dictionaries for newly added and pre-existing resources
+        resources = []
+        # Add form nametags for new resources
+        if request.form.get("new_resource_name_tags"):
+            for i in request.form.get("new_resource_name_tags").split(","):
+                resources.append({"nametag" : "new_" + str(i), "new" : True})
+        # Add form nametags and database id for pre-existing resources
+        for existing_resource in existing_resources:
+            resources.append({"nametag": str(existing_resource["id"]), "new" : False, "id" : str(existing_resource["id"])})
 
-        return render_template("character_edit.html", character=characters[0], attacks=attacks, resources=resources)
+        # Add form data for resources to dictionaries using form nametags
+        for resource in resources:
+            resource["name"] = request.form.get("resource_name_" + resource["nametag"])
+            resource["max_charges"] = request.form.get("resource_max_charges_" + resource["nametag"])
+            resource["recharge"] = request.form.get("resource_recharge_" + resource["nametag"])
+            resource["retrieved"] = False
+            # Check if all form data was succesfully retrieved
+            if not None in resource.values():
+                resource["retrieved"] = True
+
+        # Update, delete or insert resources in database
+        for resource in resources:
+            # Update if resource was pre-existing and still present on the form
+            if not resource["new"] and resource["retrieved"]:
+                with sqlite3.connect(database) as conn:
+                    cur = conn.cursor()
+                    cur.execute(
+                        "UPDATE resources SET name = ?, max_charges = ?, recharge = ? WHERE id = ? AND character_id = ?",
+                        (resource["name"], resource["max_charges"], resource["recharge"], resource["id"], character_id)
+                    )
+                    conn.commit()
+            # Delete if resource was pre-existing and no longer present on the form
+            elif not resource["new"] and not resource["retrieved"]:
+                with sqlite3.connect(database) as conn:
+                    cur = conn.cursor()
+                    cur.execute(
+                        "DELETE FROM resources WHERE id = ? AND character_id = ?",
+                        (resource["id"], character_id)
+                    )
+                    conn.commit()
+            # Insert if resource is new and present on the form
+            elif resource["new"] and resource["retrieved"]:
+                with sqlite3.connect(database) as conn:
+                    cur = conn.cursor()
+                    cur.execute(
+                        "INSERT INTO resources (name, max_charges, recharge, character_id) VALUES (?, ?, ?, ?)",
+                        (resource["name"], resource["max_charges"], resource["recharge"], character_id)
+                    )
+                    conn.commit()
+
+        # Redirect user to character page
+        return redirect("/character/" + str(character_id))
+
+    # User reached route via GET (as by clicking a link or via redirect)
+    else:
+
+        # Check if character is new or pre-existing
+        if character_id == "new":
+            # Character is new
+            character = {"id":"new"}
+            attacks = []
+            resources = []
+
+        else:
+            # Query database for existing character
+            with sqlite3.connect(database) as conn:
+                conn.row_factory = sqlite3.Row
+                cur = conn.cursor()
+                cur.execute(
+                    "SELECT * FROM characters WHERE id = ?",
+                    (character_id,)
+                )
+                characters = [dict(row) for row in cur.fetchall()]
+
+            # Ensure character exists
+            if len(characters) != 1:
+                return error("not found", 404)
+            # Ensure character is owned by current user
+            character = characters[0]
+            if character["user_id"] != session["user_id"]:
+                return error("forbidden", 403)
+        
+            # Query database for attacks
+            with sqlite3.connect(database) as conn:
+                conn.row_factory = sqlite3.Row
+                cur = conn.cursor()
+                cur.execute(
+                    "SELECT * FROM attacks WHERE character_id = ?",
+                    (character_id,)
+                )
+                attacks = [dict(row) for row in cur.fetchall()]
+
+            # Query database for damage
+            for attack in attacks:
+                with sqlite3.connect(database) as conn:
+                    conn.row_factory = sqlite3.Row
+                    cur = conn.cursor()
+                    cur.execute(
+                        "SELECT * FROM damages WHERE attack_id = ?",
+                        (attack["id"],)
+                    )
+                    attack["damages"] = [dict(row) for row in cur.fetchall()]
+
+            # Query database for resources
+            with sqlite3.connect(database) as conn:
+                conn.row_factory = sqlite3.Row
+                cur = conn.cursor()
+                cur.execute(
+                    "SELECT * FROM resources WHERE character_id = ?",
+                    (character_id,)
+                )
+                resources = [dict(row) for row in cur.fetchall()]
+
+        return render_template("character_edit.html", character=character, attacks=attacks, resources=resources)
     
 
 @app.route("/character_list")
