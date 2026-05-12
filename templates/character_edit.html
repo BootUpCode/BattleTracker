@@ -18,6 +18,7 @@
     <form action="/character/{{ character.id }}/edit" method="post">
         <input id="new_resource_name_tags" name="new_resource_name_tags" hidden type="text">
         <input id="new_attack_name_tags" name="new_attack_name_tags" hidden type="text">
+        <input id="new_condition_name_tags" name="new_condition_name_tags" hidden type="text">
         <input id="new_damage_name_tags" name="new_damage_name_tags" hidden type="text">
         <table>
             <tbody>
@@ -70,49 +71,82 @@
             <thead>
                 <tr>
                     <th>Name</th>
-                    <th>Proficient</th>
-                    <th>Attribute</th>
-                    <th>Extra Bonus</th>
-                    <th>Damage</th>
+                    <th>Bonus</th>
                 </tr>
             </thead>
         </table>
 
         <div id="attack_list">
         {% for attack in attacks %}
-            <table id="{{ attack.id }}_attack_table">
-                <tbody>
-                    {% for damage in attack.damages %}
+            <div id="{{ attack.id }}">
+                <table>
+                    <tr>
+                        <td><button id="{{ attack.id }}" type="button" onclick="deleteFunction(this)" class="btn btn-primary">Delete Attack</button></td>
+                        <td><button id="{{ attack.id }}" type="button" onclick="createDamageFunction(this)" class="btn btn-primary">New Damage</button></td>
+                        <td><button id="{{ attack.id }}" type="button" onclick="createConditionFunction(this)" class="btn btn-primary">New Condition</button></td>
+                        <td><button id="{{ attack.id }}" type="button" onclick="createAbilityFunction(this)" class="btn btn-primary">New Ability</button></td>
+                    </tr>
+                    <tr>
+                        <td><input name="{{ attack.id }}_attack_name" value="{{ attack.name }}" placeholder="Name" type="text" class="form-control mx-auto w-auto" autocomplete="off" required></td>
+                        <td><input name="{{ attack.id }}_attack_bonus" value="{{ attack.bonus }}" placeholder="Bonus" type="number" class="form-control mx-auto w-auto" autocomplete="off" required></td>
+                    </tr>
+                </table>
+                <table id="{{ attack.id }}_damages">
+                {% for damage in attack.damages %}
+                    <tr id="{{ attack.id }}.{{ damage.id }}">
+                        <td><input name="{{ attack.id }}.{{ damage.id }}_damage_count" value="{{ damage.count }}" placeholder="Count" type="number" class="form-control mx-auto w-auto" autocomplete="off" required></td>
+                        <td><input name="{{ attack.id }}.{{ damage.id }}_damage_size" value="{{ damage.size }}" placeholder="Size" type="number" class="form-control mx-auto w-auto" autocomplete="off" required></td>
+                        <td><input name="{{ attack.id }}.{{ damage.id }}_damage_bonus" value="{{ damage.bonus }}" placeholder="Bonus" type="number" class="form-control mx-auto w-auto" autocomplete="off" required></td>
+                        <td><input name="{{ attack.id }}.{{ damage.id }}_damage_type" value="{{ damage.type }}" placeholder="Type" type="text" class="form-control mx-auto w-auto" autocomplete="off" required></td>
+                        <td><button id="{{ attack.id }}.{{ damage.id }}" type="button" onclick="deleteFunction(this)" class="btn btn-primary">Delete Damage</button></td>
+                    </tr>
+                {% endfor %}
+                </table>
+                <table id="{{ attack.id }}_conditions">
+                {% for condition in attack.conditions %}
+                    <tr id="{{ attack.id }}.{{ condition.id }}">
+                        <td><input name="{{ attack.id }}.{{ condition.id }}_condition_name" value="{{ condition.name }}" placeholder="Name" type="text" class="form-control mx-auto w-auto" autocomplete="off" required></td>
+                        <td><input name="{{ attack.id }}.{{ condition.id }}_condition_duration" value="{{ condition.duration }}" placeholder="Duration" type="text" class="form-control mx-auto w-auto" autocomplete="off" required></td>
+                        <td><input name="{{ attack.id }}.{{ condition.id }}_condition_save_moment" value="{{ condition.save_moment }}" placeholder="Save moment" type="text" class="form-control mx-auto w-auto" autocomplete="off" required></td>
+                        <td><input name="{{ attack.id }}.{{ condition.id }}_condition_save_dc" value="{{ condition.save_dc }}" placeholder="Save DC" type="number" class="form-control mx-auto w-auto" autocomplete="off" required></td>
+                        <td><input name="{{ attack.id }}.{{ condition.id }}_condition_save_attribute" value="{{ condition.save_attribute }}" placeholder="Save Attribute" type="text" class="form-control mx-auto w-auto" autocomplete="off" required></td>
+                        <td><button id="{{ attack.id }}.{{ condition.id }}" type="button" onclick="deleteFunction(this)" class="btn btn-primary">Delete Condition</button></td>
+                    </tr>
+                {% endfor %}
+                </table>
+                {% if attack.ability %}
+                <div id="{{ attack.id }}_ability">
+                    <div>
+                        <button id="{{ attack.id }}_ability" type="button" onclick="deleteFunction(this)" class="btn btn-primary">Delete Attack</button>
+                        <button id="{{ attack.id }}_ability" type="button" onclick="createDamageFunction(this)" class="btn btn-primary">New Damage</button>
+                        <button id="{{ attack.id }}_ability" type="button" onclick="createConditionFunction(this)" class="btn btn-primary">New Condition</button>
+                        <input name="{{ attack.id }}_ability_name" value="{{ attack.ability.name }}" placeholder="Name" type="text" class="form-control mx-auto w-auto" autocomplete="off" required>
+                        <input name="{{ attack.id }}_ability_save_dc" value="{{ attack.ability.save_dc }}" placeholder="Save DC" type="number" class="form-control mx-auto w-auto" autocomplete="off" required>
+                    </div>
+                    <table id="{{ attack.id }}_ability_damages">
+                    {% for damage in attack.ability.damages %}
                         <tr>
-                            {% if damage == attack.damages[0] %}
-                                <td><input name="{{ attack.id }}_attack_name" value="{{ attack.name }}"type="text" class="form-control mx-auto w-auto" autocomplete="off" required></td>
-                                <td><input name="{{ attack.id }}_attack_proficient" value="{{ attack.proficient }}"type="number" class="form-control mx-auto w-auto" autocomplete="off" required></td>
-                                <td><select name="{{ attack.id }}_attack_attribute" class="form-control mx-auto w-auto" required>
-                                    <option value="None" selected>None</option>
-                                    <option value="STR" {% if attack.attribute=='STR' %} selected {% endif %}>STR</option>
-                                    <option value="DEX" {% if attack.attribute=='DEX' %} selected {% endif %}>DEX</option>
-                                    <option value="CON" {% if attack.attribute=='CON' %} selected {% endif %}>CON</option>
-                                    <option value="INT" {% if attack.attribute=='INT' %} selected {% endif %}>INT</option>
-                                    <option value="WIS" {% if attack.attribute=='WIS' %} selected {% endif %}>WIS</option>
-                                    <option value="CHA" {% if attack.attribute=='CHA' %} selected {% endif %}>CHA</option></select></td>
-                                <td><input name="{{ attack.id }}_attack_bonus" value="{{ attack.attack_bonus }}"type="number" class="form-control mx-auto w-auto" autocomplete="off" required></td>
-                            {% else %}
-                                <td></td><td></td><td></td><td></td>
-                            {% endif %}
-                            <td><input name="{{ attack.id }}.{{ damage.id }}_damage_dice_number" value="{{ damage.dice_number }}"type="number" class="form-control mx-auto w-auto" autocomplete="off" required></td>
-                            <td><input name="{{ attack.id }}.{{ damage.id }}_damage_dice_size" value="{{ damage.dice_size }}"type="number" class="form-control mx-auto w-auto" autocomplete="off" required></td>
-                            <td><input name="{{ attack.id }}.{{ damage.id }}_damage_bonus" value="{{ damage.damage_bonus }}"type="number" class="form-control mx-auto w-auto" autocomplete="off" required></td>
-                            <td><input name="{{ attack.id }}.{{ damage.id }}_damage_type" value="{{ damage.type }}"type="text" class="form-control mx-auto w-auto" autocomplete="off" required></td>
-                            {% if damage == attack.damages[0] %}
-                                <td><button id="{{ attack.id }}" type="button" onclick="deleteTableFunction(this)" class="btn btn-primary">Delete Attack</button></td>
-                                <td><button id="{{ attack.id }}" type="button" onclick="createDamageFunction(this)" class="btn btn-primary">New Damage</button></td>
-                            {% else %}
-                                <td><button id="{{ attack.id }}" type="button" onclick="deleteRowFunction(this)" class="btn btn-primary">Delete Damage</button></td>
-                            {% endif %}
+                            <td><input name="{{ attack.id }}_ability.{{ damage.id }}_damage_count" value="{{ damage.count }}" placeholder="Count" type="number" class="form-control mx-auto w-auto" autocomplete="off" required></td>
+                            <td><input name="{{ attack.id }}_ability.{{ damage.id }}_damage_size" value="{{ damage.size }}" placeholder="Size" type="number" class="form-control mx-auto w-auto" autocomplete="off" required></td>
+                            <td><input name="{{ attack.id }}_ability.{{ damage.id }}_damage_bonus" value="{{ damage.bonus }}" placeholder="Bonus" type="number" class="form-control mx-auto w-auto" autocomplete="off" required></td>
+                            <td><input name="{{ attack.id }}_ability.{{ damage.id }}_damage_type" value="{{ damage.type }}" placeholder="Type" type="text" class="form-control mx-auto w-auto" autocomplete="off" required></td>
                         </tr>
                     {% endfor %}
-                </tbody>
-            </table>
+                    </table>
+                    <table id="{{ attack.id }}_ability_conditions">
+                    {% for condition in attack.ability.conditions %}
+                        <tr>
+                            <td><input name="{{ attack.id }}_ability.{{ condition.id }}_condition_name" value="{{ condition.name }}" placeholder="Name" type="text" class="form-control mx-auto w-auto" autocomplete="off" required></td>
+                            <td><input name="{{ attack.id }}_ability.{{ condition.id }}_condition_duration" value="{{ condition.duration }}" placeholder="Duration" type="text" class="form-control mx-auto w-auto" autocomplete="off" required></td>
+                            <td><input name="{{ attack.id }}_ability.{{ condition.id }}_condition_save_moment" value="{{ condition.save_moment }}" placeholder="Save moment" type="text" class="form-control mx-auto w-auto" autocomplete="off" required></td>
+                            <td><input name="{{ attack.id }}_ability.{{ condition.id }}_condition_save_dc" value="{{ condition.save_dc }}" placeholder="Save DC" type="number" class="form-control mx-auto w-auto" autocomplete="off" required></td>
+                            <td><input name="{{ attack.id }}_ability.{{ condition.id }}_condition_save_attribute" value="{{ condition.save_attribute }}" placeholder="Save Attribute" type="text" class="form-control mx-auto w-auto" autocomplete="off" required></td>
+                        </tr>
+                    {% endfor %}
+                    </table>
+                </div>
+                {% endif %}
+            </div>
         {% endfor %}
         </div>
 
@@ -147,6 +181,7 @@
     <script>
         var newAttackNameTags = [];
         var newDamageNameTags = [];
+        var newConditionNameTags = [];
         var newResourceNameTags = [];
 
         function createAttackFunction() {
@@ -158,33 +193,35 @@
             newDamageNameTags[newDamageNameTags.length] = newDamageNameTag;
             document.getElementById("new_damage_name_tags").value = newDamageNameTags.toString();
 
-            var table = document.createElement("table");
-            table.id = newAttackNameTag + "_attack_table";
-            var row = table.insertRow(table.rows.length);
-            var cell0 = row.insertCell(0);
-            var cell0 = row.insertCell(0);
-            var cell1 = row.insertCell(1);
-            var cell2 = row.insertCell(2);
-            var cell3 = row.insertCell(3);
-            var cell4 = row.insertCell(4);
-            var cell5 = row.insertCell(5);
-            var cell6 = row.insertCell(6);
-            var cell7 = row.insertCell(7);
-            var cell8 = row.insertCell(8);
-            var cell9 = row.insertCell(9);
-            cell0.innerHTML = "<input name='" + newAttackNameTag + "_attack_name' type='text' class='form-control mx-auto w-auto' autocomplete='off' required>";
-            cell1.innerHTML = "<input name='" + newAttackNameTag + "_attack_proficient' type='number' class='form-control mx-auto w-auto' autocomplete='off' required>";
-            cell2.innerHTML = "<select name='" + newAttackNameTag + "_attack_attribute' class='form-control mx-auto w-auto' required><option value='None' selected='selected'>None</option><option value='STR'>STR</option><option value='DEX'>DEX</option><option value='CON'>CON</option><option value='INT'>INT</option><option value='WIS'>WIS</option><option value='CHA'>CHA</option></select>"
-            cell3.innerHTML = "<input name='" + newAttackNameTag + "_attack_bonus' 'type='number' class='form-control mx-auto w-auto' autocomplete='off' required>"
-            cell4.innerHTML = "<input name='" + newDamageNameTag + "_damage_dice_number' type='number' class='form-control mx-auto w-auto' autocomplete='off' required>"
-            cell5.innerHTML = "<input name='" + newDamageNameTag + "_damage_dice_size' type='number' class='form-control mx-auto w-auto' autocomplete='off' required>"
-            cell6.innerHTML = "<input name='" + newDamageNameTag + "_damage_bonus' type='number' class='form-control mx-auto w-auto' autocomplete='off' required>"
-            cell7.innerHTML = "<input name='" + newDamageNameTag + "_damage_type' type='text' class='form-control mx-auto w-auto' autocomplete='off' required>"
-            cell8.innerHTML = "<button id='" + newAttackNameTag + "' type='button' onclick='deleteTableFunction(this)' class='btn btn-primary'>Delete Attack</button>"
-            cell9.innerHTML = "<button id='" + newAttackNameTag + "' type='button' onclick='createDamageFunction(this)' class='btn btn-primary'>New Damage</button>"
+            var attackTable = document.createElement("table");
+            var firstRow = attackTable.insertRow(attackTable.rows.length);
+            var cell0 = firstRow.insertCell(0);
+            var cell1 = firstRow.insertCell(1);
+            var cell2 = firstRow.insertCell(2);
+            var cell3 = firstRow.insertCell(3);
+            var secondRow = attackTable.insertRow(attackTable.rows.length);
+            var cell4 = secondRow.insertCell(0);
+            var cell5 = secondRow.insertCell(1);
 
-            var attack_list = document.getElementById("attack_list");
-            attack_list.append(table);
+            cell0.innerHTML = "<button id='" + newAttackNameTag + "' type='button' onclick='deleteFunction(this)' class='btn btn-primary'>Delete Attack</button>"
+            cell1.innerHTML = "<button id='" + newAttackNameTag + "' type='button' onclick='createDamageFunction(this)' class='btn btn-primary'>New Damage</button>"
+            cell2.innerHTML = "<button id='" + newAttackNameTag + "' type='button' onclick='createConditionFunction(this)' class='btn btn-primary'>New Condition</button>"
+            cell3.innerHTML = "<button id='" + newAttackNameTag + "' type='button' onclick='createAbilityFunction(this)' class='btn btn-primary'>New Ability</button>"
+            cell4.innerHTML = "<input name='" + newAttackNameTag + "_attack_name' placeholder='Name' type='text' class='form-control mx-auto w-auto' autocomplete='off' required>"
+            cell5.innerHTML = "<input name='" + newAttackNameTag + "_attack_bonus' placeholder='Bonus' type='number' class='form-control mx-auto w-auto' autocomplete='off' required>";
+
+            var damagesTable = document.createElement("table");
+            damagesTable.id = newAttackNameTag + "_damages";
+
+            var conditionsTable = document.createElement("table");
+           conditionsTable.id = newAttackNameTag + "_conditions";
+
+            var mainDiv = document.createElement("div");
+            mainDiv.id = newAttackNameTag;
+            mainDiv.append(attackTable, damagesTable, conditionsTable);
+
+            var attackList = document.getElementById("attack_list");
+            attackList.append(mainDiv);
         }
 
         function createDamageFunction(htmlElementNode) {
@@ -194,23 +231,65 @@
             newDamageNameTags[newDamageNameTags.length] = newDamageNameTag;
             document.getElementById("new_damage_name_tags").value = newDamageNameTags.toString();
 
-            var table = document.getElementById(attack_id + "_attack_table");
+            var damageTable = document.getElementById(attack_id + "_damages");
+            var row = damageTable.insertRow(damageTable.rows.length);
+            row.id = newDamageNameTag;
+            var cell0 = row.insertCell(0);
+            var cell1 = row.insertCell(1);
+            var cell2 = row.insertCell(2);
+            var cell3 = row.insertCell(3);
+            var cell4 = row.insertCell(4);
+            cell0.innerHTML = "<input name='" + newDamageNameTag + "_damage_count' placeholder='Count' type='number' class='form-control mx-auto w-auto' autocomplete='off' required>"
+            cell1.innerHTML = "<input name='" + newDamageNameTag + "_damage_size' placeholder='Size' type='number' class='form-control mx-auto w-auto' autocomplete='off' required>"
+            cell2.innerHTML = "<input name='" + newDamageNameTag + "_damage_bonus' placeholder='Bonus' type='number' class='form-control mx-auto w-auto' autocomplete='off' required>"
+            cell3.innerHTML = "<input name='" + newDamageNameTag + "_damage_type' placeholder='Type' type='text' class='form-control mx-auto w-auto' autocomplete='off' required>"
+            cell4.innerHTML = "<button id='" + newDamageNameTag + "' type='button' onclick='deleteFunction(this)' class='btn btn-primary'>Delete Damage</button>"
+        }
 
-            var row = table.insertRow(table.rows.length);
+        function createConditionFunction(htmlElementNode) {
+            var attack_id = htmlElementNode.id;
+
+            var newConditionNameTag = attack_id + ".new_" + newConditionNameTags.length.toString();
+            newConditionNameTags[newConditionNameTags.length] = newConditionNameTag;
+            document.getElementById("new_condition_name_tags").value = newConditionNameTags.toString();
+
+            var conditionTable = document.getElementById(attack_id + "_conditions");
+            var row = conditionTable.insertRow(conditionTable.rows.length);
+            row.id = newConditionNameTag;
             var cell0 = row.insertCell(0);
             var cell1 = row.insertCell(1);
             var cell2 = row.insertCell(2);
             var cell3 = row.insertCell(3);
             var cell4 = row.insertCell(4);
             var cell5 = row.insertCell(5);
-            var cell6 = row.insertCell(6);
-            var cell7 = row.insertCell(7);
-            var cell8 = row.insertCell(8);
-            cell4.innerHTML = "<input name='" + newDamageNameTag + "_damage_dice_number' type='number' class='form-control mx-auto w-auto' autocomplete='off' required>"
-            cell5.innerHTML = "<input name='" + newDamageNameTag + "_damage_dice_size' type='number' class='form-control mx-auto w-auto' autocomplete='off' required>"
-            cell6.innerHTML = "<input name='" + newDamageNameTag + "_damage_bonus' type='number' class='form-control mx-auto w-auto' autocomplete='off' required>"
-            cell7.innerHTML = "<input name='" + newDamageNameTag + "_damage_type' type='text' class='form-control mx-auto w-auto' autocomplete='off' required>"
-            cell8.innerHTML = "<button type=button onclick=deleteRowFunction(this) class='btn btn-primary'>Delete Damage</button>"
+            cell0.innerHTML = "<input name='" + newConditionNameTag + "_condition_name' placeholder='Name' type='text' class='form-control mx-auto w-auto' autocomplete='off' required>"
+            cell1.innerHTML = "<input name='" + newConditionNameTag + "_condition_duration' placeholder='Duration' type='text' class='form-control mx-auto w-auto' autocomplete='off' required>"
+            cell2.innerHTML = "<input name='" + newConditionNameTag + "_condition_save_moment' placeholder='Save moment' type='text' class='form-control mx-auto w-auto' autocomplete='off' required>"
+            cell3.innerHTML = "<input name='" + newConditionNameTag + "_condition_save_dc' placeholder='Save DC' type='number' class='form-control mx-auto w-auto' autocomplete='off' required>"
+            cell4.innerHTML = "<input name='" + newConditionNameTag + "_condition_save_attribute' placeholder='Save Attribute' type='text' class='form-control mx-auto w-auto' autocomplete='off' required>"
+            cell5.innerHTML = "<button id='" + newConditionNameTag + "' type='button' onclick='deleteFunction(this)' class='btn btn-primary'>Delete Condition</button>";
+        }
+
+        function createAbilityFunction(htmlElementNode) {
+            var attack_id = htmlElementNode.id;
+            if (document.getElementById(attack_id + "_ability"))
+                return;
+
+            var abilityDiv = document.createElement("div");
+            abilityDiv.innerHTML = "<button id='" + attack_id + "_ability' type='button' onclick='deleteFunction(this)' class='btn btn-primary'>Delete Ability</button><button id='" + attack_id + "_ability' type='button' onclick='createDamageFunction(this)' class='btn btn-primary'>New Damage</button><button id='" + attack_id + "_ability' type='button' onclick='createConditionFunction(this)' class='btn btn-primary'>New Condition</button><input name='" + attack_id + "_ability_name' placeholder='Name' type='text' class='form-control mx-auto w-auto' autocomplete='off' required><input name='" + attack_id + "_ability_save_dc' placeholder='Save DC' type='number' class='form-control mx-auto w-auto' autocomplete='off' required>";
+            
+            var damagesTable = document.createElement("table");
+            damagesTable.id = attack_id + "_ability_damages";
+
+            var conditionsTable = document.createElement("table");
+           conditionsTable.id = attack_id + "_ability_conditions";
+
+            var mainDiv = document.createElement("div");
+            mainDiv.id = attack_id + "_ability";
+            mainDiv.append(abilityDiv, damagesTable, conditionsTable);
+
+            var attackDiv = document.getElementById(attack_id);
+            attackDiv.append(mainDiv);
         }
 
         function createResourceFunction() {
@@ -249,10 +328,11 @@
             }
         }
 
-        function deleteTableFunction(htmlElementNode) {
+        function deleteFunction(htmlElementNode) {
+            deleteTarget = htmlElementNode.id;
             while (htmlElementNode) {
                 htmlElementNode = htmlElementNode.parentNode;
-                if (htmlElementNode.tagName.toLowerCase() === 'table')
+                if (htmlElementNode.id == deleteTarget)
                 {
                     htmlElementNode.remove();
                     return;
