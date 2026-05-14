@@ -404,7 +404,7 @@ def edit_character(character_id):
                     conn.row_factory = sqlite3.Row
                     cur = conn.cursor()
                     cur.execute(
-                        "SELECT * FROM damages WHERE attack_id = ?",
+                        "SELECT * FROM damages WHERE trigger_id = ?",
                         (attack["id"],)
                     )
                     attack["damages"] = [dict(row) for row in cur.fetchall()]

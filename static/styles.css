@@ -1,8 +1,40 @@
-th, td {
-    text-align: left;
-    padding-right: 10px;
+table {
+  width: 100%;
+  border: 1px solid #000;
 }
 
-input {
+.attacks table {
+  width: 100%;
+  border: 1px solid #000;
+}
+
+.attacks th, td {
     text-align: left;
+    padding: 0px;
+    border: 1px solid #000;
+    height: 40px;
+}
+
+.attacks input {
+    text-align: left;
+    width: 100%;
+}
+
+.attacks select {
+    text-align: left;
+    width: 100%;
+}
+
+.attacks select:invalid {
+    color: gray;
+}
+
+.attacks label {
+    text-align: left;
+    width: 100%;
+    padding: 5px;
+}
+
+.attacks button {
+    width: 100%;
 }

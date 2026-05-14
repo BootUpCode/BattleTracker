@@ -5,7 +5,7 @@
 {% endblock %}
 
 {% block main %}
-    <input autocomplete="off" hidden class="form-control mx-auto w-auto" name="party_id" value="{{ invitation.party_id }}" type="text">
+    <input autocomplete="off" hidden name="party_id" value="{{ invitation.party_id }}" type="text">
 
     <h2>Characters in {{ invitation.name }}</h2>
     
@@ -35,7 +35,7 @@
 
         <form action="/invitation/{{ invitation.id }}/accepted" method="post">
             <div class="mb-3">
-                <select class="form-control mx-auto w-auto" name="character_id" placeholder="Select character">
+                <select name="character_id" placeholder="Select character">
                     {% for character in characters %}
                         <option value="{{ character.id }}">
                             {{ character.name }}
