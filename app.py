@@ -119,8 +119,11 @@ def edit_character(character_id):
     # User reached route via POST (as by submitting a form via POST)
     if request.method == "POST":
 
+        print(str(request.form.get("new_attack_name_tags")))
+        print(str(request.form.get("new_ability_name_tags")))
+        print(str(request.form.get("new_damage_name_tags")))
+
         # --- Character Data ---
-        # Get form data for character
         character = {"name" : request.form.get("name"), 
                      "background" : request.form.get("background"), 
                      "species" : request.form.get("species"), 
@@ -135,7 +138,6 @@ def edit_character(character_id):
         if None in character.values():
             return error("missing input", 400)
         
-        # Insert or update character in database
         if character_id == "new":
             # Insert new character
             with sqlite3.connect(database) as conn:
@@ -156,48 +158,45 @@ def edit_character(character_id):
                     (character["name"], character["background"], character["species"], character["class"], character["prof_bonus"], character["initiative_bonus"], character["speed"], character["size"], character["max_hitpoints"], character_id, session["user_id"])
                 )
                 conn.commit()
-        
+
         # --- Attack Data ---
         # Query database for attacks
         with sqlite3.connect(database) as conn:
             conn.row_factory = sqlite3.Row
             cur = conn.cursor()
             cur.execute(
-                "SELECT * FROM attacks WHERE character_id = ?",
+                "SELECT id FROM attacks WHERE character_id = ?",
                 (character_id,)
             )
-            existing_attacks = [dict(row) for row in cur.fetchall()]
+            attacks = [dict(row) for row in cur.fetchall()]
 
-        # Create list containing dictionaries for newly added and pre-existing attacks
-        attacks = []
+        # Add form nametags for pre-existing attacks
+        for attack in attacks:
+            attack["new"] = False
+            attack["nametag"] = "a:" + str(attack["id"])
         # Add form nametags for new attacks
         if request.form.get("new_attack_name_tags"):
-            for i in request.form.get("new_attack_name_tags").split(","):
+            for i in str(request.form.get("new_attack_name_tags")).split(","):
                 attacks.append({"nametag" : str(i), "new" : True})
-        # Add form database id and nametags for pre-existing attacks
-        for existing_attack in existing_attacks:
-            attacks.append({"nametag": str(existing_attack["id"]), "new" : False, "id" : str(existing_attack["id"])})
-
+        
         # Add form data for attacks to dictionaries using form nametags
         for attack in attacks:
-            attack["name"] = request.form.get(attack["nametag"] + "_attack_name")
-            attack["proficient"] = request.form.get(attack["nametag"] + "_attack_proficient")
-            attack["attribute"] = request.form.get(attack["nametag"] + "_attack_attribute")
-            attack["attack_bonus"] = request.form.get(attack["nametag"] + "_attack_bonus")
+            attack["name"] = request.form.get(attack["nametag"] + "_name")
+            attack["bonus"] = request.form.get(attack["nametag"] + "_bonus")
+            attack["description"] = request.form.get(attack["nametag"] + "_description")
             attack["retrieved"] = False
             # Check if all attack form data was succesfully retrieved
             if not None in attack.values():
                 attack["retrieved"] = True
 
-        # Update, delete or insert attacks in database
         for attack in attacks:
             # Update if attack was pre-existing and still present on the form
             if not attack["new"] and attack["retrieved"]:
                 with sqlite3.connect(database) as conn:
                     cur = conn.cursor()
                     cur.execute(
-                        "UPDATE attacks SET name = ?, attack_bonus = ?, proficient = ?, attribute = ? WHERE id = ? AND character_id = ?",
-                        (attack["name"], attack["attack_bonus"], attack["proficient"], attack["attribute"], attack["id"], character_id)
+                        "UPDATE attacks SET name = ?, bonus = ?, description = ? WHERE id = ? AND character_id = ?",
+                        (attack["name"], attack["bonus"], attack["description"], attack["id"], character_id)
                     )
                     conn.commit()
             # Delete if attack was pre-existing and no longer present on the form
@@ -214,8 +213,8 @@ def edit_character(character_id):
                 with sqlite3.connect(database) as conn:
                     cur = conn.cursor()
                     cur.execute(
-                        "INSERT INTO attacks (name, attack_bonus, proficient, attribute, character_id) VALUES (?, ?, ?, ?, ?) RETURNING id",
-                        (attack["name"], attack["attack_bonus"], attack["proficient"], attack["attribute"], character_id)
+                        "INSERT INTO attacks (name, bonus, description, character_id) VALUES (?, ?, ?, ?) RETURNING id",
+                        (attack["name"], attack["bonus"], attack["description"], character_id)
                     )
                     attack["id"] = cur.fetchone()[0]
                     conn.commit()
@@ -223,56 +222,120 @@ def edit_character(character_id):
             elif attack["new"] and not attack["retrieved"]:
                 attacks.remove(attack)
 
-        # --- Damage Data ---
+        # -- Ability Data --
+        # Query database for abilities
+        with sqlite3.connect(database) as conn:
+            conn.row_factory = sqlite3.Row
+            cur = conn.cursor()
+            cur.execute(
+                "SELECT id FROM abilities WHERE character_id = ?",
+                (character_id,)
+            )
+            abilities = [dict(row) for row in cur.fetchall()]
+        
+        # Add form nametags for pre-existing abilities
+        for ability in abilities:
+            ability["new"] = False
+            ability["nametag"] = "s:" + str(ability["id"])
+        # Add form nametags for new abilities
+        if request.form.get("new_ability_name_tags"):
+            for i in request.form.get("new_ability_name_tags").split(","):
+                abilities.append({"nametag" : str(i), "new" : True})
+        
+        # Add form data for abilities to dictionaries using form nametags
+        for ability in abilities:
+            ability["name"] = request.form.get(ability["nametag"] + "_name")
+            ability["dc"] = request.form.get(ability["nametag"] + "_dc")
+            ability["attribute"] = request.form.get(ability["nametag"] + "_attribute")
+            ability["description"] = request.form.get(ability["nametag"] + "_description")
+            ability["retrieved"] = False
+            # Check if all ability form data was succesfully retrieved
+            if not None in ability.values():
+                ability["retrieved"] = True
+
+        for ability in abilities:
+            # Update if ability was pre-existing and still present on the form
+            if not ability["new"] and ability["retrieved"]:
+                with sqlite3.connect(database) as conn:
+                    cur = conn.cursor()
+                    cur.execute(
+                        "UPDATE abilities SET name = ?, dc = ?, attribute = ?, description = ? WHERE id = ? AND character_id = ?",
+                        (ability["name"], ability["dc"], ability["attribute"], ability["description"], ability["id"], character_id)
+                    )
+                    conn.commit()
+            # Delete if ability was pre-existing and no longer present on the form
+            elif not ability["new"] and not ability["retrieved"]:
+                with sqlite3.connect(database) as conn:
+                    cur = conn.cursor()
+                    cur.execute(
+                        "DELETE FROM abilities WHERE id = ? AND character_id = ?",
+                        (ability["id"], character_id)
+                    )
+                    conn.commit()
+            # Insert if ability is new and present on the form
+            elif ability["new"] and ability["retrieved"]:
+                with sqlite3.connect(database) as conn:
+                    cur = conn.cursor()
+                    cur.execute(
+                        "INSERT INTO abilities (name, dc, attribute, description, character_id) VALUES (?, ?, ?, ?, ?) RETURNING id",
+                        (ability["name"], ability["dc"], ability["attribute"], ability["description"], character_id)
+                    )
+                    ability["id"] = cur.fetchone()[0]
+                    conn.commit()
+            # Delete from ability list if ability is new and no longer present on the form
+            elif ability["new"] and not ability["retrieved"]:
+                abilities.remove(ability)
+
+        # -- Damage Data ---
         # Query database for damages
-        existing_damages = []
-        for attack in attacks:
+        damages = []
+        trigger_id_lookup = []
+        for trigger in attacks + abilities:
+            if trigger["id"]:
+                trigger_id_lookup.append({"nametag": trigger["nametag"], "id": trigger["id"]})
             with sqlite3.connect(database) as conn:
                 conn.row_factory = sqlite3.Row
                 cur = conn.cursor()
                 cur.execute(
-                    "SELECT * FROM damages WHERE attack_id = ?",
-                    (attack["id"],)
+                    "SELECT id, trigger_id FROM damages WHERE trigger_id = ?",
+                    (trigger["id"],)
                 )
-                attack_damages = [dict(row) for row in cur.fetchall()]
-            for attack_damage in attack_damages:
-                if attack_damage["id"]:
-                    existing_damages.extend(attack_damages)
+                trigger_damages = [dict(row) for row in cur.fetchall()]
 
-        # Create list containing dictionaries for newly added and pre-existing damages
-        damages = []
-        # Add form nametags and attack id for new damages
+            # Add form nametags for pre-existing damages
+            for trigger_damage in trigger_damages:
+                trigger_damage["new"] = False
+                trigger_damage["nametag"] = trigger["nametag"][0] + ":" + str(trigger["id"]) + ".d:" + str(trigger_damage["id"])
+            damages = damages + trigger_damages
+
+        # Check if new attacks are present on the form, add form nametags for new damages
         if request.form.get("new_damage_name_tags"):
             for i in request.form.get("new_damage_name_tags").split(","):
-                try:
-                    attack_id = list(filter(lambda attack: attack["nametag"] == str(i).split(".")[0], attacks))[0]["id"]
-                    damages.append({"nametag" : str(i), "new" : True, "attack_id" : attack_id})
-                except:
-                    continue
-        # Add form nametags and database id for pre-existing damages
-        for existing_damage in existing_damages:
-            damages.append({"nametag": str(existing_damage["attack_id"]) + "." + str(existing_damage["id"]), "new" : False, "id" : str(existing_damage["id"]), "attack_id" : str(existing_damage["attack_id"])})
+                for trigger in trigger_id_lookup:
+                    if str(i).split(".")[0] == trigger["nametag"]:
+                        damages.append({"nametag" : str(i), "trigger_id" : trigger["id"], "new" : True})
 
         # Add form data for damages to dictionaries using form nametags
         for damage in damages:
-            damage["dice_number"] = request.form.get(damage["nametag"] + "_damage_dice_size")
-            damage["dice_size"] = request.form.get(damage["nametag"] + "_damage_dice_size")
-            damage["damage_bonus"] = request.form.get(damage["nametag"] + "_damage_bonus")
-            damage["type"] = request.form.get(damage["nametag"] + "_damage_type")
+            damage["count"] = request.form.get(damage["nametag"] + "_count")
+            damage["size"] = request.form.get(damage["nametag"] + "_size")
+            damage["bonus"] = request.form.get(damage["nametag"] + "_bonus")
+            damage["type"] = request.form.get(damage["nametag"] + "_type")
             damage["retrieved"] = False
             # Check if all damage form data was succesfully retrieved
             if not None in damage.values():
                 damage["retrieved"] = True
 
-        # Update, delete or insert damages in database
+        print(str(damages))
+        
         for damage in damages:
             # Update if damage was pre-existing and still present on the form
             if not damage["new"] and damage["retrieved"]:
                 with sqlite3.connect(database) as conn:
                     cur = conn.cursor()
                     cur.execute(
-                        "UPDATE damages SET dice_number = ?, dice_size = ?, damage_bonus = ?, type = ? WHERE id = ? AND attack_id = ?",
-                        (damage["dice_number"], damage["dice_size"], damage["damage_bonus"], damage["type"], damage["id"], damage["attack_id"])
+                        "UPDATE damages SET count = ?, size = ?, bonus = ?, type = ? WHERE id = ? AND trigger_id = ?",
+                        (damage["count"], damage["size"], damage["bonus"], damage["type"], damage["id"], damage["trigger_id"])
                     )
                     conn.commit()
             # Delete if damage was pre-existing and no longer present on the form
@@ -280,8 +343,8 @@ def edit_character(character_id):
                 with sqlite3.connect(database) as conn:
                     cur = conn.cursor()
                     cur.execute(
-                        "DELETE FROM damages WHERE id = ?",
-                        (damage["id"],)
+                        "DELETE FROM damages WHERE id = ? and trigger_id = ?",
+                        (damage["id"], damage["trigger_id"])
                     )
                     conn.commit()
             # Insert if damage is new and present on the form
@@ -289,13 +352,13 @@ def edit_character(character_id):
                 with sqlite3.connect(database) as conn:
                     cur = conn.cursor()
                     cur.execute(
-                        "INSERT INTO damages (dice_number, dice_size, damage_bonus, type, attack_id) VALUES (?, ?, ?, ?, ?) RETURNING id",
-                        (damage["dice_number"], damage["dice_size"], damage["damage_bonus"], damage["type"], damage["attack_id"])
+                        "INSERT INTO damages (count, size, bonus, type, trigger_id) VALUES (?, ?, ?, ?, ?) RETURNING id",
+                        (damage["count"], damage["size"], damage["bonus"], damage["type"], damage["trigger_id"])
                     )
                     damage["id"] = cur.fetchone()[0]
                     conn.commit()
 
-        # --- Resource Data ---
+        # -- Resource Data ---
         # Query database for resources
         with sqlite3.connect(database) as conn:
             conn.row_factory = sqlite3.Row
@@ -326,7 +389,6 @@ def edit_character(character_id):
             if not None in resource.values():
                 resource["retrieved"] = True
 
-        # Update, delete or insert resources in database
         for resource in resources:
             # Update if resource was pre-existing and still present on the form
             if not resource["new"] and resource["retrieved"]:
@@ -393,12 +455,12 @@ def edit_character(character_id):
                 conn.row_factory = sqlite3.Row
                 cur = conn.cursor()
                 cur.execute(
-                    "SELECT * FROM attacks WHERE character_id = ?",
+                    "SELECT * FROM attacks WHERE attacks.character_id = ?",
                     (character_id,)
                 )
                 attacks = [dict(row) for row in cur.fetchall()]
 
-            # Query database for damage
+            # Query database for damage related to attacks
             for attack in attacks:
                 with sqlite3.connect(database) as conn:
                     conn.row_factory = sqlite3.Row
@@ -408,6 +470,27 @@ def edit_character(character_id):
                         (attack["id"],)
                     )
                     attack["damages"] = [dict(row) for row in cur.fetchall()]
+
+            # Query database for abilities
+            with sqlite3.connect(database) as conn:
+                conn.row_factory = sqlite3.Row
+                cur = conn.cursor()
+                cur.execute(
+                    "SELECT * FROM abilities WHERE character_id = ?",
+                    (character_id,)
+                )
+                abilities = [dict(row) for row in cur.fetchall()]
+
+            # Query database for damage related to abilities
+            for ability in abilities:
+                with sqlite3.connect(database) as conn:
+                    conn.row_factory = sqlite3.Row
+                    cur = conn.cursor()
+                    cur.execute(
+                        "SELECT * FROM damages WHERE trigger_id = ?",
+                        (ability["id"],)
+                    )
+                    ability["damages"] = [dict(row) for row in cur.fetchall()]
 
             # Query database for resources
             with sqlite3.connect(database) as conn:
@@ -419,7 +502,7 @@ def edit_character(character_id):
                 )
                 resources = [dict(row) for row in cur.fetchall()]
 
-        return render_template("character_edit.html", character=character, attacks=attacks, resources=resources)
+        return render_template("character_edit.html", character=character, attacks=attacks, abilities=abilities, resources=resources)
     
 
 @app.route("/character_list")
