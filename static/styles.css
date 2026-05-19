@@ -3,38 +3,65 @@ table {
   border: 1px solid #000;
 }
 
-.attacks table {
-  width: 100%;
-  border: 1px solid #000;
-}
-
-.attacks th, td {
-    text-align: left;
+.formtable li {
+    display: flex;
     padding: 0px;
+    width: 100%;
+    height: 32px;
+}
+
+.formtable ul {
+    list-style-type:none;
     border: 1px solid #000;
-    height: 40px;
+    padding: 0px;
+    margin: 0px;
+    width: 100%;
+    height: 100%;
 }
 
-.attacks input {
+.formtable input {
     text-align: left;
     width: 100%;
+    height: 100%;
 }
 
-.attacks select {
+.formtable textarea {
+    text-align: left;
+    field-sizing: content;
+    padding: 3px 3px 0px 3px;
+    width: 100%;
+    height: 100%;
+}
+
+.formtable select {
     text-align: left;
     width: 100%;
+    height: 100%;
 }
 
-.attacks select:invalid {
+.formtable select:invalid {
     color: gray;
 }
 
-.attacks label {
+.formtable label {
     text-align: left;
+    display: flex;
+    align-items: center;
     width: 100%;
-    padding: 5px;
+    height: 100%;
+    padding: 0px 5px 0px 5px;
 }
 
-.attacks button {
+.formtable span {
+    display: flex;
+    align-items: center;
     width: 100%;
+    height: 100%;
+    padding: 0px 5px 0px 5px;
+}
+
+.formtable button {
+    width: 100%;
+    height: 100%;
+    padding: 0px;
 }
