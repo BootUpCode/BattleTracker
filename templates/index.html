@@ -6,117 +6,109 @@
 
 {% block main %}
     <h2>My Characters</h2>
-
-    <table>
-
-        <thead>
-            <tr>
-                <th>Name</th>
-                <th>Prof. Bonus</th>
-                <th>Max HP</th>
-            </tr>
-        </thead>
-
-        <tbody>
-            {% for character in characters %}
-                <tr>
-                    <td>{{ character.name }}</td>
-                    <td>{{ character.prof_bonus }}</td>
-                    <td>{{ character.max_hitpoints }}</td>
-                    <td>
-                        <form action="/character/{{ character.id }}" method="get">
-                            <button class="btn btn-primary" type="submit">View</button>
-                        </form>
-                    </td>
-                </tr>
-            {% endfor %}
-        </tbody>
-
-    </table>
+    <ul class="formtable">
+        {% for character in characters %}
+            <li>
+                <label>{{ character.name }}</label>
+                <label>{{ character.species }}</label>
+                <label>{{ character.class }}</label>
+                <form action="/character/{{ character.creature_id }}" method="get">
+                    <button class="btn btn-primary" type="submit">View</button>
+                </form>
+                <form action="/character/{{ character.creature_id }}/edit" method="get">
+                    <button class="btn btn-primary" type="submit">Edit</button>
+                </form>
+            </li>
+        {% endfor %}
+    </ul>
 
     <form action="/character/new/edit" method="get">
         <button class="btn btn-primary" type="submit">New Character</button>
     </form>
 
-    <h2>My Parties</h2>
+    <h2>My Campaigns</h2>
+    <ul class="formtable">
+        {% for campaign in campaigns %}
+            <li>
+                <label>{{ campaign.name }}</label>
+                <form action="/campaign/{{ campaign.id }}" method="get">
+                    <button class="btn btn-primary" type="submit">View</button>
+                </form>
+                {% if campaign.dm_id == user %}
+                <form action="/campaign/{{ campaign.id }}/edit" method="get">
+                    <button class="btn btn-primary" type="submit">Edit</button>
+                </form>
+                {% endif %}
+            </li>
+        {% endfor %}
+    </ul>
 
-    <table>
-
-        <thead>
-            <tr>
-                <th>DM</th>
-                <th>Id</th>
-                <th>Name</th>
-            </tr>
-        </thead>
-
-        <tbody>
-            {% for party in parties %}
-                <tr>
-                    <td>{{ party.dm_id }}</td>
-                    <td>{{ party.id }}</td>
-                    <td>{{ party.name }}</td>
-                    <td>
-                        <form action="/party/{{ party.id }}" method="get">
-                            <button class="btn btn-primary" type="submit">View</button>
-                        </form>
-                    </td>
-                </tr>
-            {% endfor %}
-        </tbody>
-
-    </table>
-
-    <form action="/party/new/edit" method="get">
-        <button class="btn btn-primary" type="submit">New Party</button>
+    <form action="/campaign/new/edit" method="get">
+        <button class="btn btn-primary" type="submit">New campaign</button>
     </form>
 
-    <h2>Party Invitations</h2>
+    <h2>My Monsters</h2>
+    <ul class="formtable">
+        {% for monster in monsters %}
+            <li>
+                <label>{{ monster.name }}</label>
+                <label>{{ monster.species }}</label>
+                <label>{{ monster.class }}</label>
+                <form action="/monster/{{ monster.creature_id }}" method="get">
+                    <button class="btn btn-primary" type="submit">View</button>
+                </form>
+                <form action="/monster/{{ monster.creature_id }}/edit" method="get">
+                    <button class="btn btn-primary" type="submit">Edit</button>
+                </form>
+            </li>
+        {% endfor %}
+    </ul>
 
-    <table>
+    <form action="/monster/new/edit" method="get">
+        <button class="btn btn-primary" type="submit">New Monster</button>
+    </form>
 
-        <thead>
-            <tr>
-                <th>From</th>
-                <th>To</th>
-                <th>Party</th>
-                <th>Status</th>
-            </tr>
-        </thead>
-
-        <tbody>
-            {% for received_invitation in received_invitations %}
-                <tr>
-                    <td>{{ received_invitation.username }}</td>
-                    <td>Me</td>
-                    <td>{{ received_invitation.name }}</td>
-                    <td>{{ received_invitation.status }}</td>
+    <h2>Campaign invitations</h2>
+    <ul class="formtable">
+        {% for received_invitation in received_invitations %}
+                <li>
+                    <label>From {{ received_invitation.username }}</label>
+                    <label>{{ received_invitation.name }}</label>
+                    <label>{{ received_invitation.status }}</label>
                     {% if received_invitation.status == "pending" %}
-                        <td>
-                            <form action="/invitation/{{ received_invitation.id }}" method="get">
-                                <button class="btn btn-primary" type="submit">View</button>
+                        {% if characters %}
+                            <label>Join campaign with character:</label>
+                            <form action="/invitation/{{ received_invitation.id }}/accepted" method="post">
+                                <span>
+                                    <select name="creature_id" placeholder="Select character">
+                                        {% for character in characters %}
+                                            <option value="{{ character.creature_id }}">{{ character.name }}</option>
+                                        {% endfor %}
+                                    </select>
+                                    <button class="btn btn-primary" type="submit">Accept</button>
+                                </span>
                             </form>
-                        </td>
+                            <form action="/invitation/{{ received_invitation.id }}/denied" method="post">
+                                <button class="btn btn-primary" type="submit">Deny</button>
+                            </form>
+                        {% else %}
+                            <label>Please create a character before responding.</label>
+                        {% endif %}
                     {% endif %}
-                </tr>
+                </li>
             {% endfor %}
 
             {% for sent_invitation in sent_invitations %}
-                <tr>
-                    <td>Me</td>
-                    <td>{{ sent_invitation.username }}</td>
-                    <td>{{ sent_invitation.name }}</td>
-                    <td>{{ sent_invitation.status }}</td>
+                <li>
+                    <label>To {{ sent_invitation.username }}</label>
+                    <label>{{ sent_invitation.name }}</label>
+                    <label>{{ sent_invitation.status }}</label>
                     {% if sent_invitation.status == "pending" %}
-                        <td>
-                            <form action="/invitation/{{ sent_invitation.id }}/denied" method="post">
-                                <button class="btn btn-primary" type="submit">Cancel</button>
-                            </form>
-                        </td>
+                        <form action="/invitation/{{ sent_invitation.id }}/denied" method="post">
+                            <button class="btn btn-primary" type="submit">Cancel</button>
+                        </form>
                     {% endif %}
-                </tr>
+                </li>
             {% endfor %}
-        </tbody>
-
-    </table>
+    </ul>
 {% endblock %}
