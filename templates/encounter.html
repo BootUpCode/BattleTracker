@@ -1,0 +1,130 @@
+{% extends "layout.html" %}
+
+{% block title %}
+    {{ campaign.name }}
+{% endblock %}
+
+{% block head %}
+    
+{% endblock %}
+
+{% block main %}
+    <h2>Characters</h2>
+    
+    <ul class="formtable">
+        <li>
+            <span>
+                <label>User</label>
+                <label>Id</label>
+                <label>Name</label>
+                <label>Initiative</label>
+                <label>Hitpoints</label>
+            </span>
+        </li>
+        {% for character in characters %}
+            <li>
+                <span>
+                    <label>{{ character.user_id }}</label>
+                    <label>{{ character.id }}</label>
+                    <label>{{ character.name }}</label>
+                    {% if character.user_id == user or campaign.dm_id == user %}
+                            <input id="input_init_{{ character.id }}" onchange="send_init('{{ character.id }}', this.value)" type="text" value="{{ character.initiative }}">
+                            <input id="input_hp_{{ character.id }}" onchange="send_hp('{{ character.id }}', this.value)" type="text" value="{{ character.current_hitpoints }}">
+                            <label>/{{ character.max_hitpoints }}</label>
+                    {% else %}
+                            <label id="label_init_{{ character.id }}">{{ character.initiative }}</label>
+                            <label id="label_hp_{{ character.id }}">{{ character.current_hitpoints }}</label>
+                            <label>/{{ character.max_hitpoints }}</label>
+                    {% endif %}
+                        <form action="/character/{{ character.id }}" method="get">
+                            <button class="btn btn-primary" type="submit">View</button>
+                        </form>
+                    <button class="btn btn-primary" type="button" onclick="request_character_info('{{ character.id }}')">Details</button>
+                </span>
+            </li>
+        {% endfor %}
+    </ul>
+
+    <ul id="character_info" class="formtable">
+        <label id="character_user_id">"no character selected"</label>
+        <label id="character_id">"no character selected"</label>
+        <label id="character_name">"no character selected"</label>
+    </ul>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
+    <script type="text/javascript" charset="utf-8">
+        var campaign_id = "{{ campaign.id }}";
+        var user_id = "{{ user }}";
+        var socket = io();
+
+        // Join campaign room and user room when socket connects
+        socket.on("connect", function(data) {
+            socket.emit("join", {
+                "campaign_id": "{{ campaign.id }}",
+                "user_id": "{{ user }}"
+            })
+        });
+
+        // Listen for hp updates from server
+        socket.on("init_updated", function({character_id, initiative}) {
+            var input_init_element = document.getElementById("input_init_" + character_id);
+            var label_init_element = document.getElementById("label_init_" + character_id);
+            if (input_init_element)
+            {
+                input_init_element.value = initiative;
+            }
+            else if (label_init_element)
+            {
+                label_init_element.innerHTML = initiative;
+            }
+        });
+
+        // Listen for initiative updates from server
+        socket.on("hp_updated", function({character_id, current_hitpoints}) {
+            var input_hp_element = document.getElementById("input_hp_" + character_id);
+            var label_hp_element = document.getElementById("label_hp_" + character_id);
+            if (input_hp_element)
+            {
+                input_hp_element.value = current_hitpoints;
+            }
+            else if (label_hp_element)
+            {
+                label_hp_element.innerHTML = current_hitpoints;
+            }
+        });
+
+        //Listen for character data from server
+        socket.on("character_details_updated", function({character_id, character}) {
+            document.getElementById("character_user_id").innerHTML = character.user_id;
+            document.getElementById("character_id").innerHTML = character.id;
+            document.getElementById("character_name").innerHTML = character.name;
+        });
+
+        // Send initiative information to server
+        function send_init(character_id, initiative)
+        {
+            socket.emit("init_update", campaign_id, character_id, initiative);
+        }
+
+        // Send hp information to server
+        function send_hp(character_id, current_hitpoints)
+        {
+            socket.emit("hp_update", campaign_id, character_id, current_hitpoints);
+        }
+
+        // Send character id to server, which will respond with character data
+        function request_character_info(character_id)
+        {
+            socket.emit("character_info_request", user_id, character_id);
+        }
+    </script>
+{% endblock %}
+
+// SERVER CODE:
+# Sort characters based on initiative, highest first, None at the end
+    characters = sorted(characters, key=lambda x: (x["initiative"] is not None, x["initiative"]), reverse=True)
+
+    # Modify initiative for display by replacing None with empty string
+    for character in characters:
+        if character["initiative"] == None:
+            character["initiative"] = ""

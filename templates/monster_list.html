@@ -1,30 +1,30 @@
 {% extends "layout.html" %}
 
 {% block title %}
-    Parties
+    Monsters
 {% endblock %}
 
 {% block main %}
-    <h2>Parties</h2>
+    <h2>Monsters</h2>
 
     <table>
 
         <thead>
             <tr>
-                <th>DM</th>
+                <th>User</th>
                 <th>Id</th>
                 <th>Name</th>
             </tr>
         </thead>
 
         <tbody>
-            {% for party in parties %}
+            {% for monster in monsters %}
                 <tr>
-                    <td>{{ party.dm_id }}</td>
-                    <td>{{ party.id }}</td>
-                    <td>{{ party.name }}</td>
+                    <td>{{ monster.user_id }}</td>
+                    <td>{{ monster.id }}</td>
+                    <td>{{ monster.name }}</td>
                     <td>
-                        <form action="/party/{{ party.id }}" method="get">
+                        <form action="/monster/{{ monster.creature_id }}" method="get">
                             <button class="btn btn-primary" type="submit">View</button>
                         </form>
                     </td>

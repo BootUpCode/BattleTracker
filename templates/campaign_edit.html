@@ -1,0 +1,19 @@
+{% extends "layout.html" %}
+
+{% block title %}
+    {{ campaign.name }}
+{% endblock %}
+
+{% block main %}
+    <form action="/campaign/{{ campaign.id }}/edit" method="post">
+        <div class="mb-3">
+            <label>Campaign Name:</label>
+            <input autocomplete="off" autofocus name="campaign_name" value="{{ campaign.name }}" type="text" required>
+        </div>
+        <div>
+            <label>Campaign Description:</label>
+            <input autocomplete="off" name="campaign_description" value="{{ campaign.description }}" type="text" required>
+        </div>
+        <button class="btn btn-primary" type="submit">Confirm</button>
+    </form>
+{% endblock %}

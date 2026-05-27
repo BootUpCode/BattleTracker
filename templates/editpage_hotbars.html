@@ -1,0 +1,277 @@
+{% block bars %}
+    <input id="new_attack_name_tags" name="new_attack_name_tags" style="display: none;" type="text">
+        <input id="new_ability_name_tags" name="new_ability_name_tags" style="display: none;" type="text">
+        <input id="new_damage_name_tags" name="new_damage_name_tags" style="display: none;" type="text">
+        <input id="new_resource_name_tags" name="new_resource_name_tags" style="display: none;" type="text">
+
+        <div id="attack_list" style="width:80%" class="formtable">
+            {% for attack in attacks %}
+                <ul id="a:{{ attack.id }}_list" name="a:{{ attack.id }}">
+                    <li>
+                        <input style='width: 60%;' name="a:{{ attack.id }}_name" value="{{ attack.name }}" placeholder="Name" type="text" autocomplete="off" required>
+                        <input style='width: 30%;' name="a:{{ attack.id }}_bonus" value="{{ attack.bonus }}" placeholder="Bonus" type="number" autocomplete="off" required>
+                        <button style='width: 10%;' id="a:{{ attack.id }}" type="button" onclick="deleteByNameFunction(this)" class="btn btn-primary">Remove</button>
+                    </li>
+                    <li>
+                        <textarea style='width: 90%;' name="a:{{ attack.id }}_description" placeholder="Description" type="text" autocomplete="off" required>{{ attack.description }}</textarea>
+                        <button style='width: 10%;' id="a:{{ attack.id }}" type="button" onclick="createDamageFunction(this)" class="btn btn-primary">Add Damage</button>
+                    </li>
+                    {% for damage in attack.damages %}
+                        <li name="d:{{ damage.id }}">
+                            <label style='width: 10%;'>On hit:</label>
+                            <input style='width: 10%;' name="a:{{ attack.id }}.d:{{ damage.id }}_count" value="{{ damage.count }}" placeholder="X" type="number" autocomplete="off" required>
+                            <label style='width: 5%;'>d</label>
+                            <input style='width: 10%;' name="a:{{ attack.id }}.d:{{ damage.id }}_size" value="{{ damage.size }}" placeholder="X" type="number" autocomplete="off" required>
+                            <label style='width: 5%;'>+</label>
+                            <input style='width: 10%;' name="a:{{ attack.id }}.d:{{ damage.id }}_bonus" value="{{ damage.bonus }}" placeholder="X" type="number" autocomplete="off" required>
+                            <select style='width: 30%;' name="a:{{ attack.id }}.d:{{ damage.id }}_type" required>
+                                <option value='' disabled selected hidden></option>
+                                <option value='Acid' {% if damage.type == "Acid" %}selected{% endif %}>Acid</option>
+                                <option value='Bludgeoning' {% if damage.type == "Bludgeoning" %}selected{% endif %}>Bludgeoning</option>
+                                <option value='Cold' {% if damage.type == "Cold" %}selected{% endif %}>Cold</option>
+                                <option value='Fire' {% if damage.type == "Fire" %}selected{% endif %}>Fire</option>
+                                <option value='Force' {% if damage.type == "Force" %}selected{% endif %}>Force</option>
+                                <option value='Lightning' {% if damage.type == "Lightning" %}selected{% endif %}>Lightning</option>
+                                <option value='Magical Bludgeoning' {% if damage.type == "Magical Bludgeoning" %}selected{% endif %}>Magical Bludgeoning</option>
+                                <option value='Magical Piercing' {% if damage.type == "Magical Piercing" %}selected{% endif %}>Magical Piercing</option>
+                                <option value='Magical Slashing' {% if damage.type == "Magical Slashing" %}selected{% endif %}>Magical Slashing</option>
+                                <option value='Necrotic' {% if damage.type == "Necrotic" %}selected{% endif %}>Necrotic</option>
+                                <option value='Piercing' {% if damage.type == "Piercing" %}selected{% endif %}>Piercing</option>
+                                <option value='Poison' {% if damage.type == "Poison" %}selected{% endif %}>Poison</option>
+                                <option value='Psychic' {% if damage.type == "Psychic" %}selected{% endif %}>Psychic</option>
+                                <option value='Radiant' {% if damage.type == "Radiant" %}selected{% endif %}>Radiant</option>
+                                <option value='Slashing' {% if damage.type == "Slashing" %}selected{% endif %}>Slashing</option>
+                                <option value='Thunder' {% if damage.type == "Thunder" %}selected{% endif %}>Thunder</option>></select>
+                            <label style='width: 10%;' >Damage</label>
+                            <button style='width: 10%;' id="d:{{ damage.id }}" type="button" onclick="deleteByNameFunction(this)" class="btn btn-primary">Remove</button>
+                        </li>
+                    {% endfor %}
+                </ul>
+                <div name="a:{{ attack.id }}"></div>
+            {% endfor %}
+        </div>
+        <button type="button" onclick="createAttackFunction()" class="btn btn-primary">New Attack</button>
+
+        <div id="ability_list" style="width:80%" class="formtable">
+            {% for save in abilities %}
+                <ul id="s:{{ save.id }}_list" name="s:{{ save.id }}">
+                    <li>
+                        <input style='width: 60%;' name="s:{{ save.id }}_name" value="{{ save.name }}" placeholder="Name" type="text" autocomplete="off" required>
+                        <span style='width: 30%;'><label style='padding: 0px; width: 20%;'>DC</label>
+                            <input name="s:{{ save.id }}_dc" value="{{ save.dc }}" placeholder="DC" style="padding: 0px; width: 30%;" type="number" autocomplete="off" required>
+                            <select name="s:{{ save.id }}_attribute" style="padding: 0px; width: 30%;" required>
+                            <option value='' disabled selected hidden>Att</option>
+                            <option value="Strength" {% if save.attribute == "Strength" %}selected{% endif %}>STR</option>
+                            <option value="Dexterity" {% if save.attribute == "Dexterity" %}selected{% endif %}>DEX</option>
+                            <option value="Constitution" {% if save.attribute == "Constitution" %}selected{% endif %}>CON</option>
+                            <option value="Wisdom" {% if save.attribute == "Wisdom" %}selected{% endif %}>WIS</option>
+                            <option value="Intelligence" {% if save.attribute == "Intelligence" %}selected{% endif %}>INT</option>
+                            <option value="Charisma" {% if save.attribute == "Charisma" %}selected{% endif %}>CHA</option></select>
+                            <label style='width: 20%;'>Save</label></span>
+                            <button style='width: 10%;' id="s:{{ save.id }}" type="button" onclick="deleteByNameFunction(this)" class="btn btn-primary">Remove</button>
+                    </li>
+                    <li>
+                        <textarea style='width: 90%;' name="s:{{ save.id }}_description" placeholder="Description" type="text" autocomplete="off" required>{{ save.description }}</textarea>
+                        <button style='width: 10%;' id="s:{{ save.id }}" type="button" onclick="createDamageFunction(this)" class="btn btn-primary">Add Damage</button>
+                    </li>
+                    {% for damage in save.damages %}
+                        <li name="d:{{ damage.id }}">
+                            <label style='width: 10%;'>On hit:</label>
+                            <input style='width: 10%;' name="s:{{ save.id }}.d:{{ damage.id }}_count" value="{{ damage.count }}" placeholder="X" type="number" autocomplete="off" required>
+                            <label style='width: 5%;'>d</label>
+                            <input style='width: 10%;' name="s:{{ save.id }}.d:{{ damage.id }}_size" value="{{ damage.size }}" placeholder="X" type="number" autocomplete="off" required>
+                            <label style='width: 5%;'>+</label>
+                            <input style='width: 10%;' name="s:{{ save.id }}.d:{{ damage.id }}_bonus" value="{{ damage.bonus }}" placeholder="X" type="number" autocomplete="off" required>
+                            <select style='width: 30%;' name="s:{{ save.id }}.d:{{ damage.id }}_type" required>
+                                <option value='' disabled selected hidden></option>
+                                <option value='Acid' {% if damage.type == "Acid" %}selected{% endif %}>Acid</option>
+                                <option value='Bludgeoning' {% if damage.type == "Bludgeoning" %}selected{% endif %}>Bludgeoning</option>
+                                <option value='Cold' {% if damage.type == "Cold" %}selected{% endif %}>Cold</option>
+                                <option value='Fire' {% if damage.type == "Fire" %}selected{% endif %}>Fire</option>
+                                <option value='Force' {% if damage.type == "Force" %}selected{% endif %}>Force</option>
+                                <option value='Lightning' {% if damage.type == "Lightning" %}selected{% endif %}>Lightning</option>
+                                <option value='Magical Bludgeoning' {% if damage.type == "Magical Bludgeoning" %}selected{% endif %}>Magical Bludgeoning</option>
+                                <option value='Magical Piercing' {% if damage.type == "Magical Piercing" %}selected{% endif %}>Magical Piercing</option>
+                                <option value='Magical Slashing' {% if damage.type == "Magical Slashing" %}selected{% endif %}>Magical Slashing</option>
+                                <option value='Necrotic' {% if damage.type == "Necrotic" %}selected{% endif %}>Necrotic</option>
+                                <option value='Piercing' {% if damage.type == "Piercing" %}selected{% endif %}>Piercing</option>
+                                <option value='Poison' {% if damage.type == "Poison" %}selected{% endif %}>Poison</option>
+                                <option value='Psychic' {% if damage.type == "Psychic" %}selected{% endif %}>Psychic</option>
+                                <option value='Radiant' {% if damage.type == "Radiant" %}selected{% endif %}>Radiant</option>
+                                <option value='Slashing' {% if damage.type == "Slashing" %}selected{% endif %}>Slashing</option>
+                                <option value='Thunder' {% if damage.type == "Thunder" %}selected{% endif %}>Thunder</option>></select>
+                            <label style='width: 10%;' >Damage</label>
+                            <button style='width: 10%;' id="d:{{ damage.id }}" type="button" onclick="deleteByNameFunction(this)" class="btn btn-primary">Remove</button>
+                        </li>
+                    {% endfor %}
+                </ul>
+            {% endfor %}
+        </div>
+        <button type="button" onclick="createSaveFunction()" class="btn btn-primary">New Ability</button>
+
+        <div id="resource_list" style="width:80%" class="formtable">
+            <table id="resource_table">
+                <tr style="border: 0px solid transparent;">
+                    {% for i in range(0, 10) %}
+                        <th colspan="1" style="width:10%; height: 0px;"></th>
+                    {% endfor %}
+                </tr>
+                <thead>
+                    <tr>
+                        <th colspan="3">Name</th>
+                        <th colspan="3">Charge Maximum</th>
+                        <th colspan="3">Recharge</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for resource in resources %}
+                        <tr>
+                            <td colspan="3"><input name="{{ resource.id }}_name" value="{{ resource.name }}"type="text" autocomplete="off" required></td>
+                            <td colspan="3"><input name="{{ resource.id }}_max_charges" value="{{ resource.max_charges }}"type="text" autocomplete="off" required></td>
+                            <td colspan="3"><input name="{{ resource.id }}_recharge" value="{{ resource.recharge }}"type="text" autocomplete="off" required></td>
+                            <td colspan="1"><button id="{{ resource.id }}" type="button" onclick="deleteRowFunction(this)" class="btn btn-primary">X</button></td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        <button type="button" onclick="createResourceFunction()" class="btn btn-primary">New Resource</button>
+
+    <script>
+        var newAttackNameTags = [];
+        var newDamageNameTags = [];
+        var newSaveNameTags = [];
+        var newResourceNameTags = [];
+
+        function createAttackFunction() {
+            var newAttackNameTag = "a:new_" + newAttackNameTags.length.toString();
+            newAttackNameTags[newAttackNameTags.length] = newAttackNameTag;
+            document.getElementById("new_attack_name_tags").value = newAttackNameTags.toString();
+
+            var ul = document.createElement("ul");
+            document.getElementById("attack_list").append(ul);
+            ul.setAttribute("name", newAttackNameTag);
+            ul.id = newAttackNameTag + "_list";
+
+            var li = document.createElement("li");
+            ul.appendChild(li);
+            li.innerHTML = `<input style='width: 60%;' name='` + newAttackNameTag + `_name' placeholder='Name' type='text' autocomplete='off' required>
+                <input style='width: 30%;' name='` + newAttackNameTag + `_bonus' placeholder='Bonus' type='number' autocomplete='off' required>
+                <button style='width: 10%;' id='` + newAttackNameTag + `' type='button' onclick='deleteByNameFunction(this)' class='btn btn-primary'>Remove</button>`;
+
+            var li = document.createElement("li");
+            ul.appendChild(li);
+            li.innerHTML = `<textarea style='width: 90%;' name='` + newAttackNameTag + `_description' placeholder='Description' type='text' autocomplete='off' required></textarea>
+                <button style='width: 10%;' id='` + newAttackNameTag + `' type='button' onclick='createDamageFunction(this)' class='btn btn-primary'>Add Damage</button>`;
+        }
+
+        function createSaveFunction() {
+            var newSaveNameTag = "s:new_" + newSaveNameTags.length.toString();
+            newSaveNameTags[newSaveNameTags.length] = newSaveNameTag;
+            document.getElementById("new_ability_name_tags").value = newSaveNameTags.toString();
+            
+            var ul = document.createElement("ul");
+            document.getElementById("ability_list").append(ul);
+            ul.setAttribute("name", newSaveNameTag);
+            ul.id = newSaveNameTag + "_list";
+
+            var li = document.createElement("li");
+            ul.appendChild(li);
+            li.innerHTML = `<input style='width: 60%;' name='` + newSaveNameTag + `_name' placeholder='Name' type='text' autocomplete='off' required>
+                <span style='width: 30%;'><label style='padding: 0px; width: 20%;'>DC</label>
+                <input name='` + newSaveNameTag + `_dc' placeholder='DC' style='padding: 0px; width: 30%;' type='number' autocomplete='off' required>
+                <select name='` + newSaveNameTag + `_attribute' style='padding: 0px; width: 30%;' required>
+                <option value='' disabled selected hidden>Att</option>
+                <option value='Strength'>STR</option>
+                <option value='Dexterity'>DEX</option>
+                <option value='Constitution'>CON</option>
+                <option value='Wisdom'>WIS</option>
+                <option value='Intelligence'>INT</option>
+                <option value='Charisma'>CHA</option></select>
+                <label style='width: 20%;'>Save</label></span>
+                <button style='width: 10%;' id='` + newSaveNameTag + `' type='button' onclick='deleteByNameFunction(this)' class='btn btn-primary'>Remove</button>`;
+
+            var li = document.createElement("li");
+            ul.appendChild(li);
+            li.innerHTML = `<textarea style='width: 90%;' name='` + newSaveNameTag + `_description' placeholder='Description' type='text' autocomplete='off' required></textarea>
+                <button style='width: 10%;' id='` + newSaveNameTag + `' type='button' onclick='createDamageFunction(this)' class='btn btn-primary'>Add Damage</button>`;
+        }
+
+        function createDamageFunction(htmlElementNode) {
+            var newDamageNameTag = htmlElementNode.id + ".d:new_" + newDamageNameTags.length.toString();
+            newDamageNameTags[newDamageNameTags.length] = newDamageNameTag;
+            document.getElementById("new_damage_name_tags").value = newDamageNameTags.toString();
+
+            var ul = document.getElementById(htmlElementNode.id + "_list");
+            var li = document.createElement("li");
+            ul.appendChild(li);
+            li.setAttribute("name", newDamageNameTag);
+            li.innerHTML = `<label style='width: 10%;'>On hit:</label>
+                <input style='width: 10%;' name='` + newDamageNameTag + `_count' placeholder='X' type='number' autocomplete='off' required>
+                <label style='width: 5%;'>d</label>
+                <input style='width: 10%;' name='` + newDamageNameTag + `_size' placeholder='X' type='number' autocomplete='off' required>
+                <label style='width: 5%;'>+</label>
+                <input style='width: 10%;' name='` + newDamageNameTag + `_bonus' placeholder='X' type='number' autocomplete='off' required>
+                <select style='width: 30%;' name='` + newDamageNameTag + `_type' required>
+                                <option value='' disabled selected hidden></option>
+                                <option value='Acid'>Acid</option>
+                                <option value='Bludgeoning'>Bludgeoning</option>
+                                <option value='Cold'>Cold</option>
+                                <option value='Fire'>Fire</option>
+                                <option value='Force'>Force</option>
+                                <option value='Lightning'>Lightning</option>
+                                <option value='Magical Bludgeoning'>Magical Bludgeoning</option>
+                                <option value='Magical Piercing'>Magical Piercing</option>
+                                <option value='Magical Slashing'>Magical Slashing</option>
+                                <option value='Necrotic'>Necrotic</option>
+                                <option value='Piercing'>Piercing</option>
+                                <option value='Poison'>Poison</option>
+                                <option value='Psychic'>Psychic</option>
+                                <option value='Radiant'>Radiant</option>
+                                <option value='Slashing'>Slashing</option>
+                                <option value='Thunder'>Thunder</option>></select>
+                <label style='width: 10%;' >Damage</label>
+                <button style='width: 10%;' id='` + newDamageNameTag + `' type='button' onclick='deleteByNameFunction(this)' class='btn btn-primary'>Remove</button>
+                </li>`;
+        }
+
+        function repeatSaveFunction(htmlElementNode) {
+            saveRow = document.getElementById(htmlElementNode.id + "_repeatsave")
+            if (htmlElementNode.checked == true){
+                saveRow.style.display = 'table-row';
+            } else {
+                saveRow.style.display = 'none';
+            }
+        }
+
+        function createResourceFunction() {
+            var newResourceNameTag = "r:new_" + newResourceNameTags.length.toString();
+            newResourceNameTags[newResourceNameTags.length] = newResourceNameTag;
+            document.getElementById("new_resource_name_tags").value = newResourceNameTags.toString();
+
+            var table = document.getElementById("resource_table");
+
+            var colspan = [3, 3, 3, 1];
+            var innerHTML = [
+                "<input name='" + newResourceNameTag + "_name' type='text' autocomplete='off' required>",
+                "<input name='" + newResourceNameTag + "_max_charges' type='number' autocomplete='off' required>",
+                "<input name='" + newResourceNameTag + "_recharge' type='text' autocomplete='off' required>",
+                "<button id='" + newResourceNameTag + "'type='button' onclick='deleteRowFunction(this)' class='btn btn-primary'>X</button>"
+            ];
+
+            var row = insertTableRow(colspan, innerHTML, table, table.rows.length);
+        }
+
+        function deleteByNameFunction(htmlElementNode) {
+            {
+                var deleteTargets = document.getElementsByName(htmlElementNode.id);
+                console.log(deleteTargets);
+                for (var i = deleteTargets.length-1; i >= 0; i--)
+                {
+                    deleteTargets[i].parentNode.removeChild(deleteTargets[i]);
+                }
+            }
+        }
+        
+</script>
+{% endblock %}
