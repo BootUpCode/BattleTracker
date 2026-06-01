@@ -23,30 +23,51 @@
                 <span>
                     <label>{{ character.username }}</label>
                     <label>{{ character.name }}, {{ character.species }} {{ character.class }}</label>
-                    {% if character.user_id == user or campaign.dm_id == user %}
-                        <form action="/character/{{ character.creature_id }}" method="get">
-                            <button class="btn btn-primary" type="submit">View</button>
+                    <form action="/character/{{ character.creature_id }}" method="get">
+                        <button class="btn btn-primary" type="submit">View</button>
+                    </form>
+                    {% if character.user_id == user %}
+                        <form action="/character/{{ character.creature_id }}/edit" method="get">
+                            <button class="btn btn-primary" type="submit">Edit</button>
                         </form>
                     {% endif %}
                 </span>
             </li>
         {% endfor %}
+        {% for invitation in invitations %}
+            {% if invitation.status == "pending" %}
+                <li>
+                    <label>{{ invitation.username }}</label>
+                    <label>invitation {{ invitation.status }}</label>
+                    {% if campaign.dm_id == user %}
+                        <form action="/invitation/{{ invitation.id }}/denied" method="post">
+                            <button class="btn btn-primary" type="submit">Cancel</button>
+                        </form>
+                    {% endif %}
+                </li>
+            {% endif %}
+        {% endfor %}
     </ul>
 
-    <h2>Invitations</h2>
+    <h2>Encounters</h2>
     <ul class="formtable">
-        {% for invitation in invitations %}
+        {% for encounter in encounters %}
             <li>
-                <label>{{ invitation.username }}</label>
-                <label>{{ invitation.status }}</label>
-                {% if campaign.dm_id == user and invitation.status == "pending" %}
-                    <form action="/invitation/{{ invitation.id }}/denied" method="post">
-                        <button class="btn btn-primary" type="submit">Cancel</button>
+                <label>{{ encounter.name }}</label>
+                <label>{{ encounter.status }}</label>
+                {% if campaign.dm_id == user or encounter.status != "closed" %}
+                    <form action="/encounter/{{ encounter.id }}" method="get">
+                        <button class="btn btn-primary" type="submit">View</button>
+                    </form>
+                {% endif %}
+                {% if campaign.dm_id == user %}
+                    <form action="/encounter/{{ encounter.id }}/edit" method="get">
+                        <button class="btn btn-primary" type="submit">Edit</button>
                     </form>
                 {% endif %}
             </li>
         {% endfor %}
-    </ul>
+    </ul> 
 
     {% if campaign.dm_id == user %}
         <form action="/campaign/{{ campaign.id }}/invitation" method="post">
@@ -54,6 +75,12 @@
                 <input autocomplete="off" autofocus name="invitation_name" placeholder="Username" type="text">
             </div>
             <button class="btn btn-primary" type="submit">Invite</button>
+        </form>
+    {% endif %}
+
+    {% if campaign.dm_id == user %}
+        <form action="/encounter/new{{ campaign.id }}/edit" method="get">
+            <button class="btn btn-primary" type="submit">New</button>
         </form>
     {% endif %}
 {% endblock %}

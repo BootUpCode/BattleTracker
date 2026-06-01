@@ -1,0 +1,77 @@
+{% extends "layout.html" %}
+
+{% block title %}
+    {{ encounter.name }}
+{% endblock %}
+
+{% block main %}
+    <form action="/encounter/{{ encounter.id }}/edit" method="post">
+        <input autocomplete="off" id="combatant_ids" name="combatant_ids" value="{% for combatant in combatants %}{{ combatant.id }},{% endfor %}" type="text">
+
+        <div class="mb-3">
+            <label>Encounter Name:</label>
+            <input autocomplete="off" autofocus name="encounter_name" value="{{ encounter.name }}" type="text" required>
+        </div>
+    
+        <h2>Players</h2>
+        <ul class="formtable">
+            {% for player in players %}
+                <li>
+                    <label>{{ player.name }}</label>
+                    <button type="button" onclick="addCombatantFunction('{{ player.creature_id }}','{{ player.name }}')" class="btn btn-primary">Add</button>
+                </li>
+            {% endfor %}
+        </ul> 
+
+        <h2>Monsters</h2>
+        <ul class="formtable">
+            {% for monster in monsters %}
+                <li>
+                    <label>{{ monster.name }}</label>
+                    <button type="button" onclick="addCombatantFunction('{{ monster.creature_id }}','{{ monster.name }}')" class="btn btn-primary">Add</button>
+                </li>
+            {% endfor %}
+        </ul> 
+
+        <h2>Combatants</h2>
+        <ul class="formtable" id="combatants">
+            {% for combatant in combatants %}
+                <li name="{{ combatant.id }}">
+                    <label>{{ combatant.name }}</label>
+                    <input name="name_{{ combatant.id }}" hidden value="{{ combatant.id }}">
+                    <button style='width: 10%;' id="{{ combatant.id }}" type="button" onclick="deleteByNameFunction(this)" class="btn btn-primary">Remove</button>
+                </li>
+            {% endfor %}
+        </ul> 
+
+        <button class="btn btn-primary" type="submit">Confirm</button>
+
+        <script>
+            var combatant_ids = document.getElementById("combatant_ids").value;
+
+            function addCombatantFunction(combatant_creature_id, combatant_name) {
+                var newCombatant_id = "new_" + combatant_creature_id;
+                combatant_ids += newCombatant_id + ",";
+                document.getElementById("combatant_ids").value = combatant_ids.toString();
+
+                combatant_table = document.getElementById("combatants");
+                var combatant_element = document.createElement("li");
+                combatant_table.appendChild(combatant_element);
+                combatant_element.setAttribute("name", newCombatant_id);
+                combatant_element.innerHTML = `<label>` + combatant_name + `</label>
+                    <input name="name_` + newCombatant_id + `" hidden value="` + newCombatant_id + `">
+                    <button style='width: 10%;' id="` + newCombatant_id + `" type="button" onclick="deleteByNameFunction(this)" class="btn btn-primary">Remove</button>`;
+            }
+
+            function deleteByNameFunction(htmlElementNode) {
+            {
+                var deleteTargets = document.getElementsByName(htmlElementNode.id);
+                for (var i = deleteTargets.length-1; i >= 0; i--)
+                {
+                    deleteTargets[i].parentNode.removeChild(deleteTargets[i]);
+                }
+            }
+        }
+        </script>
+    </form>
+{% endblock %}
