@@ -1,88 +1,133 @@
 {% extends "layout.html" %}
 
 {% block title %}
-    {{ campaign.name }}
-{% endblock %}
-
-{% block head %}
-    
+    {{ encounter.name }}
 {% endblock %}
 
 {% block main %}
-    <h2>Characters</h2>
-    
-    <ul class="formtable">
-        <li>
-            <span>
-                <label>User</label>
-                <label>Id</label>
-                <label>Name</label>
-                <label>Initiative</label>
-                <label>Hitpoints</label>
-            </span>
-        </li>
-        {% for character in characters %}
-            <li>
+    <h2>Encounter: {{ encounter.name }}</h2>
+    <label id="encounter_status">Status: {{ encounter.status }}</label>
+    <label id="encounter_round_count">Round: {{ encounter.round_count }}</label>
+    <label id="encounter_turn_id">Turn of: {{ encounter.turn_combatant_id }}</label>
+    {% if encounter.dm_id == user %}
+        <button type="button" onclick="send_encounter_status('started')">Start</button>
+        <button type="button" onclick="send_encounter_status('paused')">Pause</button>
+        <button type="button" onclick="send_encounter_turn(-1)">Previous</button>
+        <button type="button" onclick="send_encounter_turn(1)">Next</button>
+    {% endif %}
+
+    <h2>Combatants</h2>
+    <ul id="combatants" class="formtable">
+        {% for combatant in combatants %}
+            <li id="{{ combatant.id }}">
                 <span>
-                    <label>{{ character.user_id }}</label>
-                    <label>{{ character.id }}</label>
-                    <label>{{ character.name }}</label>
-                    {% if character.user_id == user or campaign.dm_id == user %}
-                            <input id="input_init_{{ character.id }}" onchange="send_init('{{ character.id }}', this.value)" type="text" value="{{ character.initiative }}">
-                            <input id="input_hp_{{ character.id }}" onchange="send_hp('{{ character.id }}', this.value)" type="text" value="{{ character.current_hitpoints }}">
-                            <label>/{{ character.max_hitpoints }}</label>
-                    {% else %}
-                            <label id="label_init_{{ character.id }}">{{ character.initiative }}</label>
-                            <label id="label_hp_{{ character.id }}">{{ character.current_hitpoints }}</label>
-                            <label>/{{ character.max_hitpoints }}</label>
+                    <label>{{ combatant.id }}</label>
+                    <label>{{ combatant.user_id }}</label>
+                    <label>{{ combatant.creature_id }}</label>
+                    <label id="name_{{ combatant.id }}" {% if encounter.turn_combatant_id == combatant.id %} style="font-weight: bold;"{% endif %}>{{ combatant.name }}</label>
+                    <label id="label_initiative_bonus_{{ combatant.id }}" hidden>{{ combatant.initiative_bonus }}</label>
+                    {% if combatant.user_id == user or encounter.dm_id == user %}
+                        <input id="input_init_{{ combatant.id }}" onchange="send_init('{{ combatant.id }}', this.value)" type="text" value="{% if combatant.initiative == None %}{% else %}{{ combatant.initiative }}{% endif %}">
+                        <input id="input_hp_{{ combatant.id }}" onchange="send_hp('{{ combatant.id }}', this.value)" type="text" value="{{ combatant.current_hitpoints }}">
                     {% endif %}
-                        <form action="/character/{{ character.id }}" method="get">
+                    <label id="label_init_{{ combatant.id }}" {% if combatant.user_id == user or encounter.dm_id == user %}hidden{% endif %}>{% if combatant.initiative == None %}{% else %}{{ combatant.initiative }}{% endif %}</label>
+                    <label id="label_hp_{{ combatant.id }}"{% if combatant.user_id == user or encounter.dm_id == user %}hidden{% endif %}>{{ combatant.current_hitpoints }}</label>
+                    <label>/{{ combatant.max_hitpoints }}</label>
+                    {% if combatant.user_id == user or encounter.dm_id == user %}
+                        <form action="/{% if combatant.is_player %}character{% else %}monster{% endif %}/{{ combatant.creature_id }}" method="get">
                             <button class="btn btn-primary" type="submit">View</button>
                         </form>
-                    <button class="btn btn-primary" type="button" onclick="request_character_info('{{ character.id }}')">Details</button>
+                    {% endif %}
+                    {% if encounter.dm_id == user %}
+                        <button class="btn btn-primary" type="button" onclick="request_creature_info('{{ combatant.creature_id }}', '{{ combatant.is_player }}')">Details</button>
+                    {% endif %}
                 </span>
             </li>
         {% endfor %}
     </ul>
 
-    <ul id="character_info" class="formtable">
-        <label id="character_user_id">"no character selected"</label>
-        <label id="character_id">"no character selected"</label>
-        <label id="character_name">"no character selected"</label>
+    <ul id="creature_info" class="formtable">
+        <label id="creature_user_id">"no creature selected"</label>
+        <label id="creature_id">"no creature selected"</label>
+        <label id="creature_name">"no creature selected"</label>
     </ul>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
     <script type="text/javascript" charset="utf-8">
-        var campaign_id = "{{ campaign.id }}";
+        var encounter_id = "{{ encounter.id }}";
+        var encounter_dm_id = "{{ encounter.dm_id }}";
+        var encounter_status = "{{ encounter.status }}"
+        var encounter_turn_combatant_id = "{{ encounter.turn_combatant_id }}"
         var user_id = "{{ user }}";
         var socket = io();
 
-        // Join campaign room and user room when socket connects
+        // Join encounter room and user room when socket connects
         socket.on("connect", function(data) {
             socket.emit("join", {
-                "campaign_id": "{{ campaign.id }}",
+                "encounter_id": "{{ encounter.id }}",
                 "user_id": "{{ user }}"
             })
         });
 
-        // Listen for hp updates from server
-        socket.on("init_updated", function({character_id, initiative}) {
-            var input_init_element = document.getElementById("input_init_" + character_id);
-            var label_init_element = document.getElementById("label_init_" + character_id);
-            if (input_init_element)
-            {
-                input_init_element.value = initiative;
-            }
-            else if (label_init_element)
-            {
-                label_init_element.innerHTML = initiative;
+        // Listen for combatant updates from server
+        socket.on("combatants_updated", function({combatants}) {
+            if (encounter_status == "started") {
+                 // Replace elements in sorted order
+                combatant_table = document.getElementById("combatants");
+                combatant_table.innerHTML = "";
+                combatants.forEach(function (combatant) {
+                    var combatant_element = document.createElement("li");
+                    combatant_element.id = combatant.id;
+                    combatant_table.appendChild(combatant_element);
+                    combatant_string = `<span><label>` + combatant.id + `</label><label>` + combatant.user_id + `</label><label>` + combatant.creature_id + `</label><label id="name_` + combatant.id + `"`
+                    if (combatant.id == encounter_turn_combatant_id) {
+                        combatant_string += ` style="font-weight: bold;"` }
+                    combatant_string += `>` + combatant.name + `</label>
+                        <label id="label_initiative_bonus_` + combatant.id + `" hidden>` + combatant.initiative_bonus + `</label>`
+                    if (combatant.user_id == user_id || encounter_dm_id == user_id) {
+                        combatant_string += `<input id="input_init_` + combatant.id + `" onchange="send_init('` + combatant.id + `', this.value)" type="text" value="`
+                        if (combatant.initiative != null) {
+                            combatant_string += combatant.initiative }
+                        combatant_string += `"><input id="input_hp_` + combatant.id + `" onchange="send_hp('` + combatant.id + `', this.value)" type="text" value="` + combatant.current_hitpoints + `">` }
+                    combatant_string += `<label id="label_init_` + combatant.id + `"`
+                    if (combatant.user_id == user_id || encounter_dm_id == user_id) {
+                        combatant_string += ` hidden` }
+                    combatant_string += `>`
+                    if (combatant.initiative != null) { 
+                        combatant_string += combatant.initiative }
+                    combatant_string += `</label><label id="label_hp_` + combatant.id + `"`
+                    if (combatant.user_id == user_id || encounter_dm_id == user_id) {
+                        combatant_string += `hidden` }
+                    combatant_string += `>` + combatant.current_hitpoints + `</label><label>/` + combatant.max_hitpoints + `</label>`
+                    if (combatant.user_id == user_id || encounter_dm_id == user_id) {
+                        combatant_string += `<form action="/`
+                        if (combatant.is_player) { combatant_string += `character` }
+                        else { combatant_string += `monster` }
+                        combatant_string += `/` + combatant.creature_id + `" method="get">
+                                <button class="btn btn-primary" type="submit">View</button>
+                            </form>` }
+                    if (encounter_dm_id == user_id) {
+                            combatant_string += `<button class="btn btn-primary" type="button" onclick="request_creature_info('` + combatant.creature_id + `', '` + combatant.is_player + `')">Details</button></span>` }
+                combatant_element.innerHTML = combatant_string;
+                });
             }
         });
 
         // Listen for initiative updates from server
-        socket.on("hp_updated", function({character_id, current_hitpoints}) {
-            var input_hp_element = document.getElementById("input_hp_" + character_id);
-            var label_hp_element = document.getElementById("label_hp_" + character_id);
+        socket.on("init_updated", function({combatant_id, initiative}) {
+            // Update initiative label
+            document.getElementById("label_init_" + combatant_id).value = initiative;
+            // Update initiative input if present
+            if (document.getElementById("input_init_" + combatant_id))
+            {
+                document.getElementById("input_init_" + combatant_id).innerHTML = initiative;
+            }
+        });
+
+        // Listen for hitpoint updates from server
+        socket.on("hp_updated", function({combatant_id, current_hitpoints}) {
+            var input_hp_element = document.getElementById("input_hp_" + combatant_id);
+            var label_hp_element = document.getElementById("label_hp_" + combatant_id);
             if (input_hp_element)
             {
                 input_hp_element.value = current_hitpoints;
@@ -93,38 +138,56 @@
             }
         });
 
-        //Listen for character data from server
-        socket.on("character_details_updated", function({character_id, character}) {
-            document.getElementById("character_user_id").innerHTML = character.user_id;
-            document.getElementById("character_id").innerHTML = character.id;
-            document.getElementById("character_name").innerHTML = character.name;
+        // Listen for encounter status from server
+        socket.on("status_updated", function({status}) {
+            encounter_status = status;
+            document.getElementById("encounter_status").innerHTML = "Status: " + status;
         });
 
-        // Send initiative information to server
-        function send_init(character_id, initiative)
+        // Listen for turn updates from server
+        socket.on("turn_updated", function({round_count, previous_turn_id, turn_id, turn_name}) {
+            document.getElementById("encounter_round_count").innerHTML = "Round: " + round_count.toString();
+            document.getElementById("encounter_turn_id").innerHTML = "Turn of: " + turn_name.toString();
+            document.getElementById("name_" + turn_id).style.fontWeight = 'bold';
+            document.getElementById("name_" + previous_turn_id).style.fontWeight = 'normal';
+            encounter_turn_combatant_id = turn_id;
+        })
+
+        // Listen for creature data from server
+        socket.on("creature_details_updated", function({creature_id, creature}) {
+            document.getElementById("creature_user_id").innerHTML = creature.user_id;
+            document.getElementById("creature_id").innerHTML = creature.id;
+            document.getElementById("creature_name").innerHTML = creature.name;
+        });
+
+        // Send start encounter signal to server
+        function send_encounter_status(status)
         {
-            socket.emit("init_update", campaign_id, character_id, initiative);
+            socket.emit("encounter_status_update", encounter_id, status)
+        }
+
+        // Send change turn signal to server
+        function send_encounter_turn(change)
+        {
+            socket.emit("encounter_turn_update", encounter_id, change)
+        }
+
+        // Send initiative information to server
+        function send_init(combatant_id, initiative)
+        {
+            socket.emit("init_update", encounter_id, combatant_id, initiative);
         }
 
         // Send hp information to server
-        function send_hp(character_id, current_hitpoints)
+        function send_hp(combatant_id, current_hitpoints)
         {
-            socket.emit("hp_update", campaign_id, character_id, current_hitpoints);
+            socket.emit("hp_update", encounter_id, combatant_id, current_hitpoints);
         }
 
-        // Send character id to server, which will respond with character data
-        function request_character_info(character_id)
+        // Send creature id to server, which will respond with creature data
+        function request_creature_info(creature_id, is_player)
         {
-            socket.emit("character_info_request", user_id, character_id);
+            socket.emit("creature_info_request", user_id, creature_id, is_player);
         }
     </script>
 {% endblock %}
-
-// SERVER CODE:
-# Sort characters based on initiative, highest first, None at the end
-    characters = sorted(characters, key=lambda x: (x["initiative"] is not None, x["initiative"]), reverse=True)
-
-    # Modify initiative for display by replacing None with empty string
-    for character in characters:
-        if character["initiative"] == None:
-            character["initiative"] = ""

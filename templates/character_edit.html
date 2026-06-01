@@ -23,20 +23,36 @@
                     <input name="name" value="{{ character.name }}" type="text" autocomplete="off" required autofocus>
                 </li>
                 <li>
-                    <label style="width: 20%;">Background:</label>
-                    <input name="background" value="{{ character.background }}" type="text" autocomplete="off" required>
+                    <label style="width: 20%;">Size:</label>
+                    <input name="size" value="{{ character.size }}" type="text" autocomplete="off" required>
+                </li>
+                <li>
+                    <label style="width: 20%;">Alignment:</label>
+                    <input name="alignment" value="{{ character.alignment }}" type="text" autocomplete="off" required>
                 </li>
                 <li>
                     <label style="width: 20%;">Species:</label>
                     <input name="species" value="{{ character.species }}" type="text" autocomplete="off" required>
                 </li>
                 <li>
-                    <label style="width: 20%;">Class & Level:</label>
+                    <label style="width: 20%;">Class:</label>
                     <input name="class" value="{{ character.class }}" type="text" autocomplete="off" required>
                 </li>
                 <li>
+                    <label style="width: 20%;">Background:</label>
+                    <input name="background" value="{{ character.background }}" type="text" autocomplete="off" required>
+                </li>
+                <li>
                     <label style="width: 20%;">Proficiency Bonus:</label>
-                    <input name="prof_bonus" value="{{ character.prof_bonus }}" type="number" autocomplete="off" required>
+                    <input name="prof_bonus" value="{{ character.prof_bonus }}" type="text" autocomplete="off" required>
+                </li>
+                <li>
+                    <label style="width: 20%;">AC:</label>
+                    <input name="armor_class" value="{{ character.armor_class }}" type="text" autocomplete="off" required>
+                </li>
+                <li>
+                    <label style="width: 20%;">HP:</label>
+                    <input name="max_hitpoints" value="{{ character.max_hitpoints }}" type="number" autocomplete="off" required>
                 </li>
                 <li>
                     <label style="width: 20%;">Initiative Bonus:</label>
@@ -44,20 +60,61 @@
                 </li>
                 <li>
                     <label style="width: 20%;">Speed:</label>
-                    <input name="speed" value="{{ character.speed }}" type="number" autocomplete="off" required>
-                </li>
-                <li>
-                    <label style="width: 20%;">Size:</label>
-                    <input name="size" value="{{ character.size }}" type="text" autocomplete="off" required>
+                    <input name="speed" value="{{ character.speed }}" type="text" autocomplete="off" required>
                 </li>
 
                 <li>
-                    <label style="width: 20%;">Hit Point Maximum:</label>
-                    <input name="max_hitpoints" value="{{ character.max_hitpoints }}" type="number" autocomplete="off" required>
+                    <label style="width: 20%;">STR:</label>
+                    <input name="strength" value="{{ character.strength }}" type="number" autocomplete="off" required>
+                    <label style="width: 20%;">Save bonus:</label>
+                    <input name="strength_save_bonus" value="{{ character.strength_save_bonus }}" type="number" autocomplete="off" required>
                 </li>
                 <li>
-                    <label style="width: 20%;">Features:</label>
-                    <textarea name="features" type="text" autocomplete="off">{{ character.features }}</textarea>
+                    <label style="width: 20%;">DEX:</label>
+                    <input name="dexterity" value="{{ character.dexterity }}" type="number" autocomplete="off" required>
+                    <label style="width: 20%;">Save bonus:</label>
+                    <input name="dexterity_save_bonus" value="{{ character.dexterity_save_bonus }}" type="number" autocomplete="off" required>
+                </li>
+                <li>
+                    <label style="width: 20%;">CON:</label>
+                    <input name="constitution" value="{{ character.constitution }}" type="number" autocomplete="off" required>
+                    <label style="width: 20%;">Save bonus:</label>
+                    <input name="constitution_save_bonus" value="{{ character.constitution_save_bonus }}" type="number" autocomplete="off" required>
+                </li>
+                <li>
+                    <label style="width: 20%;">INT:</label>
+                    <input name="intelligence" value="{{ character.intelligence }}" type="number" autocomplete="off" required>
+                    <label style="width: 20%;">Save bonus:</label>
+                    <input name="intelligence_save_bonus" value="{{ character.intelligence_save_bonus }}" type="number" autocomplete="off" required>
+                </li>
+                <li>
+                    <label style="width: 20%;">WIS:</label>
+                    <input name="wisdom" value="{{ character.wisdom }}" type="number" autocomplete="off" required>
+                    <label style="width: 20%;">Save bonus:</label>
+                    <input name="wisdom_save_bonus" value="{{ character.wisdom_save_bonus }}" type="number" autocomplete="off" required>
+                </li>
+                <li>
+                    <label style="width: 20%;">CHA:</label>
+                    <input name="charisma" value="{{ character.charisma }}" type="number" autocomplete="off" required>
+                    <label style="width: 20%;">Save bonus:</label>
+                    <input name="charisma_save_bonus" value="{{ character.charisma_save_bonus }}" type="number" autocomplete="off" required>
+                </li>
+                
+                <li>
+                    <label style="width: 20%;">Skills:</label>
+                    <input name="skills" value="{{ character.skills }}" type="text" autocomplete="off">
+                </li>
+                <li>
+                    <label style="width: 20%;">Senses:</label>
+                    <input name="senses" value="{{ character.senses }}" type="text" autocomplete="off">
+                </li>
+                <li>
+                    <label style="width: 20%;">Languages:</label>
+                    <input name="languages" value="{{ character.languages }}" type="text" autocomplete="off">
+                </li>
+                <li>
+                    <label style="width: 20%;">Traits:</label>
+                    <textarea name="traits" type="text" autocomplete="off">{{ character.traits }}</textarea>
                 </li>
         </ul>
 

@@ -297,7 +297,7 @@ def handle_creature_features(database, creature_id):
                 conn.commit()
 
 
-def sql_insert(database, tablename, insert_values):
+def sql_insert(database, tablename, insert_values, return_variable = None):
     """Insert dict into database as new row"""
 
     # Variable validation
@@ -322,11 +322,21 @@ def sql_insert(database, tablename, insert_values):
     # Build sql statement end
     sql_string = insert_string + ") " + values_string + ")"
 
+    # Add query for optional return variable
+    if return_variable:
+        sql_string += " returning " + return_variable
+
     # Insert dictionary as new database row
     with sqlite3.connect(database) as conn:
         cur = conn.cursor()
         cur.execute(sql_string, parameters)
+        if return_variable:
+            return_value = cur.fetchone()[0]
         conn.commit()
+
+    # Return variable
+    if return_variable:
+        return return_value
 
 def sql_update(database, tablename, update_values, update_location):
     """Update database row with dict"""
