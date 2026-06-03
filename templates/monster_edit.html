@@ -12,131 +12,216 @@
     {% endif %}
     
     <form action="/monster/{{ monster.creature_id }}/edit" method="post">
+        <div class="statblock_container">
+            <span class="name_span">
+                <label class="name_label">Name</label>
+                <input class="name_input" name="name" value="{{ monster.name }}" type="text" autocomplete="off" required autofocus>
+            </span>
+            <hr style="margin: 3px 5px 3px 5px">    
+            <div class="statblock">
+                <div>
+                    <ul style="max-width: 450px;">
+                        <li>
+                            <span>
+                                <label class="type_label"><em>Size</em></label>
+                                <input class="type_input" name="size" value="{{ monster.size }}" type="text" autocomplete="off" required>
+                            </span>
+                        </li>
+                        <li>
+                            <span>
+                                <label class="type_label"><em>Type</em></label>
+                                <input class="type_input" name="type" value="{{ monster.type }}" type="text" autocomplete="off" required>
+                            </span>
+                        </li>
+                        <li>
+                            <span>
+                                <label class="type_label"><em>Alignment</em></label>
+                                <input class="type_input" name="alignment" value="{{ monster.alignment }}" type="text" autocomplete="off" required>
+                            </span>
+                        </li>
+                        <li>
+                            <span>
+                                <label><strong>AC</strong></label>
+                                <input class="number_input" name="armor_class" value="{{ monster.armor_class }}" type="text" autocomplete="off" required>
+                            </span>
+                        </li>
+                        <li>
+                            <span>
+                                <label><strong>HP</strong></label>
+                                <input class="number_input" name="max_hitpoints" value="{{ monster.max_hitpoints }}" type="number" autocomplete="off" required>
+                            </span>
+                        </li>
+                        <li>
+                            <span>
+                                <label><strong>Initiative</strong></label>
+                                <input class="number_input" name="initiative_bonus" value="{{ monster.initiative_bonus }}" type="number" autocomplete="off" required>
+                            </span>
+                        </li>
+                        <li>
+                            <span>
+                                <label><strong>Speed</strong></label>
+                                <textarea class="small_textarea" name="speed" type="text" autocomplete="off">{{ monster.speed }}</textarea>
+                            </span>
+                        </li>
+                        <li>
+                            <span class="attribute_column_span">
+                                <label class="attribute_column_label"></label>
+                                <label class="attribute_column_label"></label>
+                                <label class="attribute_column_label">MOD</label>
+                                <label class="attribute_column_label">SAVE</label>
+                            </span>
+                            <span class="attribute_column_span">
+                                <label class="attribute_column_label"></label>
+                                <label class="attribute_column_label"></label>
+                                <label class="attribute_column_label">MOD</label>
+                                <label class="attribute_column_label">SAVE</label>
+                            </span>
+                        </li>
+                        <li>
+                            <span class="attribute_span">
+                                <label class="attribute_label"><b>STR</b></label>
+                                <input class="attribute_input" name="strength" value="{{ monster.strength }}" type="number" autocomplete="off" required onchange="attributeChange(this)">
+                                <label class="attribute_mod_label" id="strength_mod">{% if monster.strength > 9 %}+{% endif %}{{ ((monster.strength | float - 10) / 2) | round(0, 'floor') | int }}</label>
+                                <input class="attribute_input" name="strength_save_bonus" value="{% if monster.strength_save_bonus >= 0 %}+{% endif %}{{ monster.strength_save_bonus }}" type="text" autocomplete="off" required>
+                            </span>
+                            <span class="attribute_span">
+                                <label class="attribute_label"><b>INT</b></label>
+                                <input class="attribute_input" name="intelligence" value="{{ monster.intelligence }}" type="number" autocomplete="off" required onchange="attributeChange(this)">
+                                <label class="attribute_mod_label" id="intelligence_mod">{% if monster.intelligence > 9 %}+{% endif %}{{ ((monster.intelligence | float - 10) / 2) | round(0, 'floor') | int }}</label>
+                                <input class="attribute_input" name="intelligence_save_bonus" value="{% if monster.intelligence_save_bonus >= 0 %}+{% endif %}{{ monster.intelligence_save_bonus }}" type="text" autocomplete="off" required>
+                            </span>
+                        </li>
+                        <li>
+                            <span class="attribute_span">
+                                <label class="attribute_label"><b>DEX</b></label>
+                                <input class="attribute_input" name="dexterity" value="{{ monster.dexterity }}" type="number" autocomplete="off" required onchange="attributeChange(this)">
+                                <label class="attribute_mod_label" id="dexterity_mod">{% if monster.dexterity > 9 %}+{% endif %}{{ ((monster.dexterity | float - 10) / 2) | round(0, 'floor') | int }}</label>
+                                <input class="attribute_input" name="dexterity_save_bonus" value="{% if monster.dexterity_save_bonus >= 0 %}+{% endif %}{{ monster.dexterity_save_bonus }}" type="text" autocomplete="off" required>
+                            </span>
+                            <span class="attribute_span">
+                                <label class="attribute_label"><b>WIS</b></label>
+                                <input class="attribute_input" name="wisdom" value="{{ monster.wisdom }}" type="number" autocomplete="off" required onchange="attributeChange(this)">
+                                <label class="attribute_mod_label" id="wisdom_mod">{% if monster.wisdom > 9 %}+{% endif %}{{ ((monster.wisdom | float - 10) / 2) | round(0, 'floor') | int }}</label>
+                                <input class="attribute_input" name="wisdom_save_bonus" value="{% if monster.wisdom_save_bonus >= 0 %}+{% endif %}{{ monster.wisdom_save_bonus }}" type="text" autocomplete="off" required>
+                            </span>
+                        </li>
+                        <li>
+                            <span class="attribute_span">
+                                <label class="attribute_label"><b>CON</b></label>
+                                <input class="attribute_input" name="constitution" value="{{ monster.constitution }}" type="number" autocomplete="off" required onchange="attributeChange(this)">
+                                <label class="attribute_mod_label" id="constitution_mod">{% if monster.constitution > 9 %}+{% endif %}{{ ((monster.constitution | float - 10) / 2) | round(0, 'floor') | int }}</label>
+                                <input class="attribute_input" name="constitution_save_bonus" value="{% if monster.constitution_save_bonus >= 0 %}+{% endif %}{{ monster.constitution_save_bonus }}" type="text" autocomplete="off" required>
+                            </span>
+                            <span class="attribute_span">
+                                <label class="attribute_label"><b>CHA</b></label>
+                                <input class="attribute_input" name="charisma" value="{{ monster.charisma }}" type="number" autocomplete="off" required onchange="attributeChange(this)">
+                                <label class="attribute_mod_label" id="charisma_mod">{% if monster.charisma > 9 %}+{% endif %}{{ ((monster.charisma | float - 10) / 2) | round(0, 'floor') | int }}</label>
+                                <input class="attribute_input" name="charisma_save_bonus" value="{% if monster.charisma_save_bonus >= 0 %}+{% endif %}{{ monster.charisma_save_bonus }}" type="text" autocomplete="off" required>
+                        </li>
+                    </ul>
+                </div>
+                <div>
+                    <ul style="max-width: 450px;">
+                        <li>
+                            <span>
+                                <label><strong>Skills</strong></label>
+                                <textarea class="small_textarea" name="skills" type="text" autocomplete="off">{{ monster.skills }}</textarea>
+                            </span>
+                        </li>
+                        <li>
+                            <span>
+                                <label><strong>Vulnerabilities</strong></label>
+                                <textarea class="small_textarea" name="vulnerabilities" type="text" autocomplete="off">{{ monster.vulnerabilties }}</textarea>
+                            </span>
+                        </li>
+                        <li>
+                            <span>
+                                <label><strong>Resistances</strong></label>
+                                <textarea class="small_textarea" name="resistances" type="text" autocomplete="off">{{ monster.resistances }}</textarea>
+                            </span>
+                        </li>
+                        <li>
+                            <span>
+                                <label><strong>Immunities</strong></label>
+                                <textarea class="small_textarea" name="immunities" type="text" autocomplete="off">{{ monster.immunities }}</textarea>
+                            </span>
+                        </li>
+                        <li>
+                            <span>
+                                <label><strong>Senses</strong></label>
+                                <textarea class="small_textarea" name="senses" type="text" autocomplete="off">{{ monster.senses }}</textarea>
+                            </span>
+                        </li>
+                        <li>
+                            <span>
+                                <label><strong>Languages</strong></label>
+                                <textarea class="small_textarea" name="languages" type="text" autocomplete="off">{{ monster.languages }}</textarea>
+                            </span>
+                        </li>
+                        <li>
+                            <span>
+                                <label><strong>CR</strong></label>
+                                <input class="number_input" name="challenge_rating" value="{{ monster.challenge_rating }}" type="text" autocomplete="off">
+                            </span>
+                        </li>
+                    </ul>
+                </div>
+                <div>
+                    <ul style="max-width: 450px;">
+                        <h3>Traits</h3>
+                        <hr>
+                        <textarea class="large_textarea" name="traits" type="text" autocomplete="off">{{ monster.traits }}</textarea>
+                    </ul>
+                </div>
+                <div>
+                    <ul style="max-width: 450px;">
+                        <h3>Actions</h3>
+                        <hr>
+                        <textarea class="large_textarea" name="actions" type="text" autocomplete="off">{{ monster.actions }}</textarea>
+                    </ul>
+                </div>
+                <div>
+                    <ul style="max-width: 450px;">
+                        <h3>Bonus Actions</h3>
+                        <hr>
+                        <textarea class="large_textarea" name="bonus_actions" type="text" autocomplete="off">{{ monster.bonus_actions }}</textarea>
+                    </ul>
+                </div>
+                <div>
+                    <ul style="max-width: 450px;">
+                        <h3>Reactions</h3>
+                        <hr>
+                        <textarea class="large_textarea" name="reactions" type="text" autocomplete="off">{{ monster.reactions }}</textarea>
+                    </ul>
+                </div>
+                <div>
+                    <ul style="max-width: 450px;">
+                        <h3>Legendary Actions</h3>
+                        <hr>
+                        <textarea class="large_textarea" name="legendary_actions" type="text" autocomplete="off">{{ monster.legendary_actions }}</textarea>
+                    </ul>
+                </div>
+                <span>
+                    <button type="submit" class="btn btn-primary">Confirm</button>
+                </span>
+            </div>
+        </div>
+        {% include "editpage_hotbars.html" %}
 
-        <ul class="formtable">
-                <li>
-                    <label style="width: 20%;">Name:</label>
-                    <input name="name" value="{{ monster.name }}" type="text" autocomplete="off" required autofocus>
-                </li>
-                <li>
-                    <label style="width: 20%;">Size:</label>
-                    <input name="size" value="{{ monster.size }}" type="text" autocomplete="off" required>
-                </li>
-                <li>
-                    <label style="width: 20%;">Type:</label>
-                    <input name="type" value="{{ monster.type }}" type="text" autocomplete="off" required>
-                </li>
-                <li>
-                    <label style="width: 20%;">Alignment:</label>
-                    <input name="alignment" value="{{ monster.alignment }}" type="text" autocomplete="off" required>
-                </li>
-
-                <li>
-                    <label style="width: 20%;">AC:</label>
-                    <input name="armor_class" value="{{ monster.armor_class }}" type="text" autocomplete="off" required>
-                </li>
-                <li>
-                    <label style="width: 20%;">HP:</label>
-                    <input name="max_hitpoints" value="{{ monster.max_hitpoints }}" type="number" autocomplete="off" required>
-                </li>
-                <li>
-                    <label style="width: 20%;">CR:</label>
-                    <input name="challenge_rating" value="{{ monster.challenge_rating }}" type="text" autocomplete="off">
-                </li>
-                <li>
-                    <label style="width: 20%;">Initiative Bonus:</label>
-                    <input name="initiative_bonus" value="{{ monster.initiative_bonus }}" type="number" autocomplete="off" required>
-                </li>
-                <li>
-                    <label style="width: 20%;">Speed:</label>
-                    <input name="speed" value="{{ monster.speed }}" type="text" autocomplete="off" required>
-                </li>
-
-                <li>
-                    <label style="width: 20%;">STR:</label>
-                    <input name="strength" value="{{ monster.strength }}" type="number" autocomplete="off" required>
-                    <label style="width: 20%;">Save bonus:</label>
-                    <input name="strength_save_bonus" value="{{ monster.strength_save_bonus }}" type="number" autocomplete="off" required>
-                </li>
-                <li>
-                    <label style="width: 20%;">DEX:</label>
-                    <input name="dexterity" value="{{ monster.dexterity }}" type="number" autocomplete="off" required>
-                    <label style="width: 20%;">Save bonus:</label>
-                    <input name="dexterity_save_bonus" value="{{ monster.dexterity_save_bonus }}" type="number" autocomplete="off" required>
-                </li>
-                <li>
-                    <label style="width: 20%;">CON:</label>
-                    <input name="constitution" value="{{ monster.constitution }}" type="number" autocomplete="off" required>
-                    <label style="width: 20%;">Save bonus:</label>
-                    <input name="constitution_save_bonus" value="{{ monster.constitution_save_bonus }}" type="number" autocomplete="off" required>
-                </li>
-                <li>
-                    <label style="width: 20%;">INT:</label>
-                    <input name="intelligence" value="{{ monster.intelligence }}" type="number" autocomplete="off" required>
-                    <label style="width: 20%;">Save bonus:</label>
-                    <input name="intelligence_save_bonus" value="{{ monster.intelligence_save_bonus }}" type="number" autocomplete="off" required>
-                </li>
-                <li>
-                    <label style="width: 20%;">WIS:</label>
-                    <input name="wisdom" value="{{ monster.wisdom }}" type="number" autocomplete="off" required>
-                    <label style="width: 20%;">Save bonus:</label>
-                    <input name="wisdom_save_bonus" value="{{ monster.wisdom_save_bonus }}" type="number" autocomplete="off" required>
-                </li>
-                <li>
-                    <label style="width: 20%;">CHA:</label>
-                    <input name="charisma" value="{{ monster.charisma }}" type="number" autocomplete="off" required>
-                    <label style="width: 20%;">Save bonus:</label>
-                    <input name="charisma_save_bonus" value="{{ monster.charisma_save_bonus }}" type="number" autocomplete="off" required>
-                </li>
-                
-                <li>
-                    <label style="width: 20%;">Skills:</label>
-                    <input name="skills" value="{{ monster.skills }}" type="text" autocomplete="off">
-                </li>
-                <li>
-                    <label style="width: 20%;">Vulnerabilities:</label>
-                    <input name="vulnerabilities" value="{{ monster.vulnerabilities }}" type="text" autocomplete="off">
-                </li>
-                <li>
-                    <label style="width: 20%;">Resistances:</label>
-                    <input name="resistances" value="{{ monster.resistances }}" type="text" autocomplete="off">
-                </li>
-                <li>
-                    <label style="width: 20%;">Immunities:</label>
-                    <input name="immunities" value="{{ monster.immunities }}" type="text" autocomplete="off">
-                </li>
-                <li>
-                    <label style="width: 20%;">Senses:</label>
-                    <input name="senses" value="{{ monster.senses }}" type="text" autocomplete="off">
-                </li>
-                <li>
-                    <label style="width: 20%;">Languages:</label>
-                    <input name="languages" value="{{ monster.languages }}" type="text" autocomplete="off">
-                </li>
-
-                <li>
-                    <label style="width: 20%;">Traits:</label>
-                    <textarea name="traits" type="text" autocomplete="off">{{ monster.traits }}</textarea>
-                </li>
-                <li>
-                    <label style="width: 20%;">Actions:</label>
-                    <textarea name="actions" type="text" autocomplete="off">{{ monster.actions }}</textarea>
-                </li>
-                <li>
-                    <label style="width: 20%;">Bonus Actions:</label>
-                    <textarea name="bonus_actions" type="text" autocomplete="off">{{ monster.bonus_actions }}</textarea>
-                </li>
-                <li>
-                    <label style="width: 20%;">Reactions:</label>
-                    <textarea name="reactions" type="text" autocomplete="off">{{ monster.reactions }}</textarea>
-                </li>
-                <li>
-                    <label style="width: 20%;">Legendary Actions:</label>
-                    <textarea name="legendary_actions" type="text" autocomplete="off">{{ monster.legendary_actions }}</textarea>
-                </li>
-
-                {% include "editpage_hotbars.html" %}
-
-                <button type="submit" class="btn btn-primary">Confirm</button>
-        </ul>
-    {% endblock %}
+        <script>
+            function attributeChange(htmlElement) {
+                var attribute = htmlElement.getAttribute("name");
+                var attributeValue = htmlElement.value;
+                var attributeMod = "";
+                if (attributeValue > 9) {
+                    attributeMod += "+";
+                } else {
+                    attributeMod += "-";
+                }
+                attributeMod += Math.floor((attributeValue - 10) / 2).toString();
+                console.log(attribute, attributeValue, attributeMod);
+                document.getElementById(attribute + "_mod").innerHTML = attributeMod;
+            }
+        </script>
+    </form>        
+{% endblock %}

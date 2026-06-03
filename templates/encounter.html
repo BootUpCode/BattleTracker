@@ -14,6 +14,9 @@
         <button type="button" onclick="send_encounter_status('paused')">Pause</button>
         <button type="button" onclick="send_encounter_turn(-1)">Previous</button>
         <button type="button" onclick="send_encounter_turn(1)">Next</button>
+        <form action="/encounter/{{ encounter.id }}/edit" method="get">
+            <button class="btn btn-primary" type="submit">Edit</button>
+        </form>
     {% endif %}
 
     <h2>Combatants</h2>
@@ -46,11 +49,9 @@
         {% endfor %}
     </ul>
 
-    <ul id="creature_info" class="formtable">
-        <label id="creature_user_id">"no creature selected"</label>
-        <label id="creature_id">"no creature selected"</label>
-        <label id="creature_name">"no creature selected"</label>
-    </ul>
+    <div id="monster_statblock_container">
+        
+    </div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
     <script type="text/javascript" charset="utf-8">
@@ -169,7 +170,9 @@
         // Send change turn signal to server
         function send_encounter_turn(change)
         {
-            socket.emit("encounter_turn_update", encounter_id, change)
+            if (encounter_status == "started") {
+                socket.emit("encounter_turn_update", encounter_id, change)
+            }
         }
 
         // Send initiative information to server

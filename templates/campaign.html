@@ -52,20 +52,20 @@
     <h2>Encounters</h2>
     <ul class="formtable">
         {% for encounter in encounters %}
-            <li>
-                <label>{{ encounter.name }}</label>
-                <label>{{ encounter.status }}</label>
-                {% if campaign.dm_id == user or encounter.status != "closed" %}
+            {% if campaign.dm_id == user or encounter.status != "closed" %}
+                <li>
+                    <label>{{ encounter.name }}</label>
+                    <label>{{ encounter.status }}</label>
                     <form action="/encounter/{{ encounter.id }}" method="get">
                         <button class="btn btn-primary" type="submit">View</button>
                     </form>
-                {% endif %}
-                {% if campaign.dm_id == user %}
-                    <form action="/encounter/{{ encounter.id }}/edit" method="get">
-                        <button class="btn btn-primary" type="submit">Edit</button>
-                    </form>
-                {% endif %}
-            </li>
+                    {% if campaign.dm_id == user %}
+                        <form action="/encounter/{{ encounter.id }}/edit" method="get">
+                            <button class="btn btn-primary" type="submit">Edit</button>
+                        </form>
+                    {% endif %}
+                </li>
+            {% endif %}
         {% endfor %}
     </ul> 
 

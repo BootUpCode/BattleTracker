@@ -1,0 +1,198 @@
+{% block statblock %}
+    <div class="statblock_container">
+        <span class="name_span">
+            <label class="name_label">{{ monster.name }}</h2>
+        </span>
+        <hr style="margin: 3px 5px 3px 5px">    
+        <div class="statblock">
+            <div>
+                <ul style="max-width: 450px;">
+                    <li>
+                        <span>
+                            <label class="type_label"><em>{{ monster.size }} {{ monster.type }}, {{ monster.alignment }}</em></label>
+                        </span>
+                    </li>
+                    <li>
+                        <span style="justify-content: left;">
+                            <label><strong>AC </strong>{{ monster.armor_class }}</label>
+                            <span style="width: 30px;"></span>
+                            <label><strong>Initiative </strong>{{ monster.initiative_bonus }}</label>
+                        </span>
+                    </li>
+                    <li>
+                        <span>
+                            <label><strong>HP </strong>{{ monster.max_hitpoints }}</label>
+                        </span>
+                    </li>
+                    <li>
+                        <span>
+                            <label><strong>Speed </strong>{{ monster.speed }}</label>
+                        </span>
+                    </li>
+                    <li style="min-height: 20px;">
+                        <span class="attribute_column_span">
+                            <label class="attribute_column_label"></label>
+                            <label class="attribute_column_label"></label>
+                            <label class="attribute_column_label">MOD</label>
+                            <label class="attribute_column_label">SAVE</label>
+                        </span>
+                        <span class="attribute_column_span">
+                            <label class="attribute_column_label"></label>
+                            <label class="attribute_column_label"></label>
+                            <label class="attribute_column_label">MOD</label>
+                            <label class="attribute_column_label">SAVE</label>
+                        </span>
+                    </li>
+                    <li>
+                        <span class="attribute_span">
+                            <label class="attribute_label"><b>STR</b></label>
+                            <label class="attribute_label">{{ monster.strength }}</label>
+                            <label class="attribute_label">{% if monster.strength > 9 %}+{% endif %}{{ ((monster.strength | float - 10) / 2) | round(0, 'floor') | int }}</label>
+                            <label class="attribute_label">{% if monster.strength_save_bonus >= 0 %}+{% endif %}{{ monster.strength_save_bonus }}</label>
+                        </span>
+                        <span class="attribute_span">
+                            <label class="attribute_label"><b>INT</b></label>
+                            <label class="attribute_label">{{ monster.intelligence }}</label>
+                            <label class="attribute_label">{% if monster.intelligence > 9 %}+{% endif %}{{ ((monster.intelligence | float - 10) / 2) | round(0, 'floor') | int }}</label>
+                            <label class="attribute_label">{% if monster.intelligence_save_bonus >= 0 %}+{% endif %}{{ monster.intelligence_save_bonus }}</label>
+                        </span>
+                    </li>
+                    <li>
+                        <span class="attribute_span">
+                            <label class="attribute_label"><b>DEX</b></label>
+                            <label class="attribute_label">{{ monster.dexterity }}</label>
+                            <label class="attribute_label">{% if monster.dexterity > 9 %}+{% endif %}{{ ((monster.dexterity | float - 10) / 2) | round(0, 'floor') | int }}</label>
+                            <label class="attribute_label">{% if monster.dexterity_save_bonus >= 0 %}+{% endif %}{{ monster.dexterity_save_bonus }}</label>
+                        </span>
+                        <span class="attribute_span">
+                            <label class="attribute_label"><b>WIS</b></label>
+                            <label class="attribute_label">{{ monster.wisdom }}</label>
+                            <label class="attribute_label">{% if monster.wisdom > 9 %}+{% endif %}{{ ((monster.wisdom | float - 10) / 2) | round(0, 'floor') | int }}</label>
+                            <label class="attribute_label">{% if monster.wisdom_save_bonus >= 0 %}+{% endif %}{{ monster.wisdom_save_bonus }}</label>
+                        </span>
+                    </li>
+                    <li>
+                        <span class="attribute_span">
+                            <label class="attribute_label"><b>CON</b></label>
+                            <label class="attribute_label">{{ monster.constitution }}</label>
+                            <label class="attribute_label">{% if monster.constitution > 9 %}+{% endif %}{{ ((monster.constitution | float - 10) / 2) | round(0, 'floor') | int }}</label>
+                            <label class="attribute_label">{% if monster.constitution_save_bonus >= 0 %}+{% endif %}{{ monster.constitution_save_bonus }}</label>
+                        </span>
+                        <span class="attribute_span">
+                            <label class="attribute_label"><b>CHA</b></label>
+                            <label class="attribute_label">{{ monster.charisma }}</label>
+                            <label class="attribute_label">{% if monster.charisma > 9 %}+{% endif %}{{ ((monster.charisma | float - 10) / 2) | round(0, 'floor') | int }}</label>
+                            <label class="attribute_label">{% if monster.charisma_save_bonus >= 0 %}+{% endif %}{{ monster.charisma_save_bonus }}</label>
+                        </span>
+                    </li>
+                </ul>
+            </div>
+
+            <div>
+                <ul style="max-width: 450px;">
+                    {% if monster.skills != "" %}
+                        <li>
+                            <span>
+                                <label><strong>Skills </strong>{{ monster.skills }}</label>
+                            </span>
+                        </li>
+                    {% endif %}
+                    {% if monster.vulnerabilities != "" %}
+                        <li>
+                            <span>
+                                <label><strong>Vulnerabilities </strong>{{ monster.vulnerabilities }}</label>
+                            </span>
+                        </li>
+                    {% endif %}
+                    {% if monster.resistances != "" %}
+                        <li>
+                            <span>
+                                <label><strong>Resistances </strong>{{ monster.resistances }}</label>
+                            </span>
+                        </li>
+                    {% endif %}
+                    {% if monster.immunities != "" %}
+                        <li>
+                            <span>
+                                <label><strong>Immunities </strong>{{ monster.immunities }}</label>
+                            </span>
+                        </li>
+                    {% endif %}
+                    {% if monster.senses != "" %}
+                        <li>
+                            <span>
+                                <label><strong>Senses </strong>{{ monster.senses }}</label>
+                            </span>
+                        </li>
+                    {% endif %}
+                    {% if monster.languages != "" %}
+                        <li>
+                            <span>
+                                <label><strong>Languages </strong>{{ monster.languages }}</label>
+                            </span>
+                        </li>
+                    {% endif %}
+                    <li>
+                        <span>
+                            <label><strong>CR </strong>{{ monster.challenge_rating }}</label>
+                        </span>
+                    </li>
+                </ul>
+            </div>
+
+            {% if monster.traits != "" %}
+                <div>
+                    <ul style="max-width: 450px;">
+                        <h3>Traits</h3>
+                        <hr>
+                        <p>{{ monster.traits }}</p>
+                    </ul>
+                </div>
+            {% endif %}
+            {% if monster.actions != "" %}
+                <div>
+                    <ul style="max-width: 450px;">
+                        <h3>Actions</h3>
+                        <hr>
+                        <p>{{ monster.actions }}</p>
+                    </ul>
+                </div>
+            {% endif %}
+            {% if monster.bonus_actions != "" %}
+                <div>
+                    <ul style="max-width: 450px;">
+                        <h3>Bonus Actions</h3>
+                        <hr>
+                        <p>{{ monster.bonus_actions }}</p>
+                    </ul>
+                </div>
+            {% endif %}
+            {% if monster.reactions != "" %}
+                <div>
+                    <ul style="max-width: 450px;">
+                        <h3>Reactions</h3>
+                        <hr>
+                        <p>{{ monster.reactions }}</p>
+                    </ul>
+                </div>
+            {% endif %}
+            {% if monster.legendary_actions != "" %}
+                <div>
+                    <ul style="max-width: 450px;">
+                        <h3>Legendary Actions</h3>
+                        <hr>
+                        <p>{{ monster.legendary_actions }}</p>
+                    </ul>
+                </div>
+            {% endif %}
+            
+            <span>
+                {% if monster.user_id == user %}
+                    <form action="/monster/{{ monster.creature_id }}/edit" method="get">
+                        <button class="btn btn-primary" type="submit">Edit</button>
+                    </form>
+                {% endif %}
+            </span>
+        </div>
+    </div>
+{% endblock %}
