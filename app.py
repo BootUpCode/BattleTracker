@@ -800,44 +800,61 @@ def view_encounter(encounter_id):
 def edit_encounter(encounter_id):
     """Edit encounter"""
 
+    if encounter_id[:3] == "new":
+        # Encounter is new
+        encounter = {"id" : encounter_id, "campaign_id" : encounter_id[3:]}
+    else:
+        # Query database for encounter
+        with sqlite3.connect(database) as conn:
+            conn.row_factory = sqlite3.Row
+            cur = conn.cursor()
+            cur.execute(
+                "SELECT * FROM encounters JOIN campaigns ON campaigns.id = encounters.campaign_id WHERE encounters.id = ?",
+                (encounter_id,)
+            )
+            encounters = [dict(row) for row in cur.fetchall()]
+
+        # Ensure encounter exists
+        if len(encounters) != 1:
+            return error("not found", 404)
+        encounter = encounters[0]
+
+    # Query database for campaign
+    with sqlite3.connect(database) as conn:
+        conn.row_factory = sqlite3.Row
+        cur = conn.cursor()
+        cur.execute(
+            "SELECT * FROM campaigns WHERE id = ?",
+            (encounter["campaign_id"],)
+        )
+        campaigns = [dict(row) for row in cur.fetchall()]
+
+    # Ensure campaign exists
+    if len(campaigns) != 1:
+        return error("not found", 404)
+    # Ensure campaign is owned by current user
+    campaign = campaigns[0]
+    if campaign["dm_id"] != session["user_id"]:
+        return error("forbidden", 403)
+    
     # User reached route via POST (as by submitting a form via POST)
     if request.method == "POST":
 
         # Ensure fields were submitted
-        encounter = {"name" : request.form.get("encounter_name"),
-                     "combatant_ids" : request.form.get("combatant_ids")}
+        encounter["name"] = request.form.get("encounter_name")
+        encounter["combatant_ids"] = request.form.get("combatant_ids")
 
         # Ensure fields were submitted
         if None in encounter.values():
             return error("missing input", 400)
         
         if encounter_id[:3] == "new":
-            # Query database for campaign
-            campaign_id = encounter_id[3:]
-
-            with sqlite3.connect(database) as conn:
-                conn.row_factory = sqlite3.Row
-                cur = conn.cursor()
-                cur.execute(
-                    "SELECT * FROM campaigns WHERE id = ?",
-                    (campaign_id,)
-                )
-                campaigns = [dict(row) for row in cur.fetchall()]
-
-            # Ensure campaign exists
-            if len(campaigns) != 1:
-                return error("not found", 404)
-            # Ensure campaign is owned by current user
-            campaign = campaigns[0]
-            if campaign["dm_id"] != session["user_id"]:
-                return error("forbidden", 403)
-
             # Insert new encounter
             with sqlite3.connect(database) as conn:
                 cur = conn.cursor()
                 cur.execute(
                     "INSERT INTO encounters (campaign_id, name, status, round_count, turn_combatant_id) VALUES (?, ?, ?, ?, ?) RETURNING id",
-                    (campaign_id, encounter["name"], "closed", 0, 0)
+                    (encounter["campaign_id"], encounter["name"], "closed", 0, 0)
                 )
                 encounter_id = cur.fetchone()[0]
                 conn.commit()
@@ -889,6 +906,7 @@ def edit_encounter(encounter_id):
                 # Ensure creature exists
                 if len(creatures) == 1:
                     creature = creatures[0]
+                    # Insert creature as new combatant
                     with sqlite3.connect(database) as conn:
                         cur = conn.cursor()
                         cur.execute(
@@ -908,9 +926,6 @@ def edit_encounter(encounter_id):
 
         # Check if encounter is new or pre-existing
         if encounter_id[:3] == "new":
-            # Encounter is new
-            encounter = {"id" : encounter_id, "campaign_id" : encounter_id[3:]}
-            
             # Query database for players
             with sqlite3.connect(database) as conn:
                 conn.row_factory = sqlite3.Row
@@ -927,21 +942,6 @@ def edit_encounter(encounter_id):
                 combatants.append({"id" : "new_" + str(player["creature_id"]), "name" : player["name"]})
 
         else:
-            # Query database for encounter
-            with sqlite3.connect(database) as conn:
-                conn.row_factory = sqlite3.Row
-                cur = conn.cursor()
-                cur.execute(
-                    "SELECT * FROM encounters JOIN campaigns ON campaigns.id = encounters.campaign_id WHERE encounters.id = ?",
-                    (encounter_id,)
-                )
-                encounters = [dict(row) for row in cur.fetchall()]
-
-            # Ensure encounter exists
-            if len(encounters) != 1:
-                return error("not found", 404)
-            encounter = encounters[0]
-
             # Query database for combatants
             with sqlite3.connect(database) as conn:
                 conn.row_factory = sqlite3.Row
@@ -972,6 +972,7 @@ def edit_encounter(encounter_id):
             monsters = [dict(row) for row in cur.fetchall()]
 
         return render_template("encounter_edit.html", encounter=encounter, combatants=combatants, players=players, monsters=monsters)
+
 
 @app.route("/login", methods=["GET", "POST"])
 def login():
