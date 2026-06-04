@@ -134,12 +134,16 @@ def edit_character(creature_id):
                            "strength_save_bonus", "dexterity_save_bonus", "constitution_save_bonus", "intelligence_save_bonus", "wisdom_save_bonus", "charisma_save_bonus",
                            "skills", "senses", "languages", "traits"]
         character = {}
-        character_traits = ["background", "species", "class","prof_bonus"]
+        character_traits = ["background", "species", "class", "prof_bonus", "species_traits", "feats",
+                            "acrobatics", "animal_handling", "arcana", "athletics", "deception", "history", "insight", "intimidation", 
+                            "investigation", "medicine", "nature", "perception", "performance", "persuasion", "religion", "sleight_of_hand", "stealth", "survival"]
 
         for creature_trait in creature_traits:
             creature[creature_trait] = request.form.get(creature_trait)
         for character_trait in character_traits:
             character[character_trait] = request.form.get(character_trait)
+
+        creature["skills"] = ""
 
         # Ensure fields were submitted
         if None in character.values() or None in creature.values():

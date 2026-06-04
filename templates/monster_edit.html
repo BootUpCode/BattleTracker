@@ -63,6 +63,10 @@
                                 <textarea class="small_textarea" name="speed" type="text" autocomplete="off">{{ monster.speed }}</textarea>
                             </span>
                         </li>
+                    </ul>
+                </div>
+                <div>
+                    <ul style="max-width: 450px;">
                         <li>
                             <span class="attribute_column_span">
                                 <label class="attribute_column_label"></label>
@@ -80,43 +84,43 @@
                         <li>
                             <span class="attribute_span">
                                 <label class="attribute_label"><b>STR</b></label>
-                                <input class="attribute_input" name="strength" value="{{ monster.strength }}" type="number" autocomplete="off" required onchange="attributeChange(this)">
-                                <label class="attribute_mod_label" id="strength_mod">{% if monster.strength > 9 %}+{% endif %}{{ ((monster.strength | float - 10) / 2) | round(0, 'floor') | int }}</label>
-                                <input class="attribute_input" name="strength_save_bonus" value="{% if monster.strength_save_bonus >= 0 %}+{% endif %}{{ monster.strength_save_bonus }}" type="text" autocomplete="off" required>
+                                <input class="attribute_input" name="strength" value="{{ monster.strength }}" type="number" autocomplete="off" required onchange="attribute_change(this)">
+                                <label class="attribute_mod_label" id="strength_mod">{% if monster.strength is defined %}{% if monster.strength > 9 %}+{% endif %}{{ ((monster.strength | float - 10) / 2) | round(0, 'floor') | int }}{% endif %}</label>
+                                <input class="attribute_input" name="strength_save_bonus" value="{% if monster.strength_save_bonus is defined %}{% if monster.strength_save_bonus >= 0 %}+{% endif %}{{ monster.strength_save_bonus }}{% endif %}" type="text" autocomplete="off" required>
                             </span>
                             <span class="attribute_span">
                                 <label class="attribute_label"><b>INT</b></label>
-                                <input class="attribute_input" name="intelligence" value="{{ monster.intelligence }}" type="number" autocomplete="off" required onchange="attributeChange(this)">
-                                <label class="attribute_mod_label" id="intelligence_mod">{% if monster.intelligence > 9 %}+{% endif %}{{ ((monster.intelligence | float - 10) / 2) | round(0, 'floor') | int }}</label>
-                                <input class="attribute_input" name="intelligence_save_bonus" value="{% if monster.intelligence_save_bonus >= 0 %}+{% endif %}{{ monster.intelligence_save_bonus }}" type="text" autocomplete="off" required>
+                                <input class="attribute_input" name="intelligence" value="{{ monster.intelligence }}" type="number" autocomplete="off" required onchange="attribute_change(this)">
+                                <label class="attribute_mod_label" id="intelligence_mod">{% if monster.intelligence is defined %}{% if monster.intelligence > 9 %}+{% endif %}{{ ((monster.intelligence | float - 10) / 2) | round(0, 'floor') | int }}{% endif %}</label>
+                                <input class="attribute_input" name="intelligence_save_bonus" value="{% if monster.intelligence_save_bonus is defined %}{% if monster.intelligence_save_bonus >= 0 %}+{% endif %}{{ monster.intelligence_save_bonus }}{% endif %}" type="text" autocomplete="off" required>
                             </span>
                         </li>
                         <li>
                             <span class="attribute_span">
                                 <label class="attribute_label"><b>DEX</b></label>
-                                <input class="attribute_input" name="dexterity" value="{{ monster.dexterity }}" type="number" autocomplete="off" required onchange="attributeChange(this)">
-                                <label class="attribute_mod_label" id="dexterity_mod">{% if monster.dexterity > 9 %}+{% endif %}{{ ((monster.dexterity | float - 10) / 2) | round(0, 'floor') | int }}</label>
-                                <input class="attribute_input" name="dexterity_save_bonus" value="{% if monster.dexterity_save_bonus >= 0 %}+{% endif %}{{ monster.dexterity_save_bonus }}" type="text" autocomplete="off" required>
+                                <input class="attribute_input" name="dexterity" value="{{ monster.dexterity }}" type="number" autocomplete="off" required onchange="attribute_change(this)">
+                                <label class="attribute_mod_label" id="dexterity_mod">{% if monster.dexterity is defined %}{% if monster.dexterity > 9 %}+{% endif %}{{ ((monster.dexterity | float - 10) / 2) | round(0, 'floor') | int }}{% endif %}</label>
+                                <input class="attribute_input" name="dexterity_save_bonus" value="{% if monster.dexterity_save_bonus is defined %}{% if monster.dexterity_save_bonus >= 0 %}+{% endif %}{{ monster.dexterity_save_bonus }}{% endif %}" type="text" autocomplete="off" required>
                             </span>
                             <span class="attribute_span">
                                 <label class="attribute_label"><b>WIS</b></label>
-                                <input class="attribute_input" name="wisdom" value="{{ monster.wisdom }}" type="number" autocomplete="off" required onchange="attributeChange(this)">
-                                <label class="attribute_mod_label" id="wisdom_mod">{% if monster.wisdom > 9 %}+{% endif %}{{ ((monster.wisdom | float - 10) / 2) | round(0, 'floor') | int }}</label>
-                                <input class="attribute_input" name="wisdom_save_bonus" value="{% if monster.wisdom_save_bonus >= 0 %}+{% endif %}{{ monster.wisdom_save_bonus }}" type="text" autocomplete="off" required>
+                                <input class="attribute_input" name="wisdom" value="{{ monster.wisdom }}" type="number" autocomplete="off" required onchange="attribute_change(this)">
+                                <label class="attribute_mod_label" id="wisdom_mod">{% if monster.wisdom is defined %}{% if monster.wisdom > 9 %}+{% endif %}{{ ((monster.wisdom | float - 10) / 2) | round(0, 'floor') | int }}{% endif %}</label>
+                                <input class="attribute_input" name="wisdom_save_bonus" value="{% if monster.wisdom_save_bonus is defined %}{% if monster.wisdom_save_bonus >= 0 %}+{% endif %}{{ monster.wisdom_save_bonus }}{% endif %}" type="text" autocomplete="off" required>
                             </span>
                         </li>
                         <li>
                             <span class="attribute_span">
                                 <label class="attribute_label"><b>CON</b></label>
-                                <input class="attribute_input" name="constitution" value="{{ monster.constitution }}" type="number" autocomplete="off" required onchange="attributeChange(this)">
-                                <label class="attribute_mod_label" id="constitution_mod">{% if monster.constitution > 9 %}+{% endif %}{{ ((monster.constitution | float - 10) / 2) | round(0, 'floor') | int }}</label>
-                                <input class="attribute_input" name="constitution_save_bonus" value="{% if monster.constitution_save_bonus >= 0 %}+{% endif %}{{ monster.constitution_save_bonus }}" type="text" autocomplete="off" required>
+                                <input class="attribute_input" name="constitution" value="{{ monster.constitution }}" type="number" autocomplete="off" required onchange="attribute_change(this)">
+                                <label class="attribute_mod_label" id="constitution_mod">{% if monster.constitution is defined %}{% if monster.constitution > 9 %}+{% endif %}{{ ((monster.constitution | float - 10) / 2) | round(0, 'floor') | int }}{% endif %}</label>
+                                <input class="attribute_input" name="constitution_save_bonus" value="{% if monster.constitution_save_bonus is defined %}{% if monster.constitution_save_bonus >= 0 %}+{% endif %}{{ monster.constitution_save_bonus }}{% endif %}" type="text" autocomplete="off" required>
                             </span>
                             <span class="attribute_span">
                                 <label class="attribute_label"><b>CHA</b></label>
-                                <input class="attribute_input" name="charisma" value="{{ monster.charisma }}" type="number" autocomplete="off" required onchange="attributeChange(this)">
-                                <label class="attribute_mod_label" id="charisma_mod">{% if monster.charisma > 9 %}+{% endif %}{{ ((monster.charisma | float - 10) / 2) | round(0, 'floor') | int }}</label>
-                                <input class="attribute_input" name="charisma_save_bonus" value="{% if monster.charisma_save_bonus >= 0 %}+{% endif %}{{ monster.charisma_save_bonus }}" type="text" autocomplete="off" required>
+                                <input class="attribute_input" name="charisma" value="{{ monster.charisma }}" type="number" autocomplete="off" required onchange="attribute_change(this)">
+                                <label class="attribute_mod_label" id="charisma_mod">{% if monster.charisma is defined %}{% if monster.charisma > 9 %}+{% endif %}{{ ((monster.charisma | float - 10) / 2) | round(0, 'floor') | int }}{% endif %}</label>
+                                <input class="attribute_input" name="charisma_save_bonus" value="{% if monster.charisma_save_bonus is defined %}{% if monster.charisma_save_bonus >= 0 %}+{% endif %}{{ monster.charisma_save_bonus }}{% endif %}" type="text" autocomplete="off" required>
                         </li>
                     </ul>
                 </div>
@@ -209,18 +213,16 @@
         {% include "editpage_hotbars.html" %}
 
         <script>
-            function attributeChange(htmlElement) {
+            function attribute_change(htmlElement) {
                 var attribute = htmlElement.getAttribute("name");
-                var attributeValue = htmlElement.value;
-                var attributeMod = "";
-                if (attributeValue > 9) {
-                    attributeMod += "+";
-                } else {
-                    attributeMod += "-";
+                var attribute_score = htmlElement.value;
+                var attribute_mod = "";
+                if (attribute_score > 9) {
+                    attribute_mod += "+";
                 }
-                attributeMod += Math.floor((attributeValue - 10) / 2).toString();
-                console.log(attribute, attributeValue, attributeMod);
-                document.getElementById(attribute + "_mod").innerHTML = attributeMod;
+                attribute_mod += Math.floor((attribute_score - 10) / 2).toString();
+                console.log(attribute, attribute_score, attribute_mod);
+                document.getElementById(attribute + "_mod").innerHTML = attribute_mod;
             }
         </script>
     </form>        

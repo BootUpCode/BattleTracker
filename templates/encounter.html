@@ -49,8 +49,11 @@
         {% endfor %}
     </ul>
 
-    <div id="monster_statblock_container">
-        
+    <div id="monster_statblock_container" hidden>
+        {% include "monster_statblock.html" %}
+    </div>
+    <div id="character_statblock_container" hidden>
+        {% include "character_statblock.html" %}
     </div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
@@ -156,10 +159,77 @@
 
         // Listen for creature data from server
         socket.on("creature_details_updated", function({creature_id, creature}) {
-            document.getElementById("creature_user_id").innerHTML = creature.user_id;
-            document.getElementById("creature_id").innerHTML = creature.id;
-            document.getElementById("creature_name").innerHTML = creature.name;
+            document.getElementById("monster_statblock_container").hidden = creature.is_player;
+            document.getElementById("character_statblock_container").hidden = !creature.is_player;
+
+            if (document.getElementById((creature.is_player == true ? "character" : "monster") + "_creature_id").innerHTML == creature.creature_id.toString()) {
+                document.getElementById((creature.is_player == true ? "character" : "monster") + "_statblock_container").hidden = !document.getElementById(creature_type + "statblock_container").hidden;
+            }
+            else {
+                document.getElementById((creature.is_player == true ? "character" : "monster") + "_statblock_container").hidden = false;
+                document.getElementById((creature.is_player == true ? "character" : "monster") + "_creature_id").innerHTML = creature.creature_id;
+            }
+
+            creature_property_names = ["name", "armor_class", "initiative_bonus", "max_hitpoints", "speed"];
+            creature_property_headers = ["", "AC ", "Initiative ", "HP ", "Speed "];
+            creature_attributes = ["strength", "dexterity", "constitution", "intelligence", "wisdom", "charisma"];
+
+            if (creature.is_player) {
+                var creature_type = "character";
+                document.getElementById(creature_type + "_type").innerHTML = "<em>" + creature.species + " " + creature.class + ", " + creature.alignment + "</em>";
+                creature_property_names.push("background", "size", "prof_bonus", "senses");
+                creature_property_headers.push("Background ", "Size ", "Proficiency ", "P. Perception ");
+                var creature_skill_names = ["acrobatics", "animal_handling", "arcana", "athletics", "deception", "history", "insight", "intimidation", 
+                                            "investigation", "medicine", "nature", "perception", "performance", "persuasion", "religion", "sleight_of_hand", "stealth", "survival"]
+                var creature_paragraph_names = ["languages", "species_traits", "feats", "traits"];
+                var creature_paragraph_headers = ["Proficiencies", "Species Traits", "Feats", "Class Features"];
+                for (var i = 0, len = creature_skill_names.length; i < len; i++) {
+                    document.getElementById(creature_type + "_" + creature_skill_names[i]).innerHTML = creature[creature_skill_names[i]];
+                }
+            } else {
+                var creature_type = "monster";
+                document.getElementById(creature_type + "_type").innerHTML = "<em>" + creature.size + " " + creature.type + ", " + creature.alignment + "</em>";
+                var creature_skill_names = ["skills", "vulnerabilities", "resistances", "immunities", "senses", "languages", "challenge_rating"];
+                var creature_skill_headers = ["Skills ", "Vulnerabilities ", "Resistances ", "Immunites ", "Senses ", "Languages ", "CR "];
+                var creature_paragraph_names = ["traits", "actions", "bonus_actions", "reactions", "legendary_actions"];
+                var creature_paragraph_headers = ["Traits", "Actions", "Bonus Actions", "Reactions", "Legendary Actions"];
+                for (var i = 0, len = creature_skill_names.length; i < len; i++) {
+                    document.getElementById(creature_type + "_" + creature_skill_names[i]).innerHTML = "<span><label><strong>" + creature_skill_headers[i] + "</strong>" + creature[creature_skill_names[i]] + "</label></span>";
+                    document.getElementById(creature_type + "_" + creature_skill_names[i]).hidden = (creature[creature_skill_names[i]] == "") ? true : false;
+                }
+            }
+            
+            for (var i = 0, len = creature_property_names.length; i < len; i++) {
+                document.getElementById(creature_type + "_" + creature_property_names[i]).innerHTML = "<strong>" + creature_property_headers[i] + "</strong>" + creature[creature_property_names[i]];
+            }
+            for (var i = 0, len = creature_attributes.length; i < len; i++) {
+                document.getElementById(creature_type + "_" + creature_attributes[i]).innerHTML = creature[creature_attributes[i]];
+                document.getElementById(creature_type + "_" + creature_attributes[i] + "_mod").innerHTML = get_attribute_mod(creature[creature_attributes[i]]);
+                var save_string = "";
+                if (parseInt(creature[(creature_attributes[i] + "_save_bonus")]) >= 0) { save_string += "+";}
+                save_string += creature[(creature_attributes[i] + "_save_bonus")];
+                document.getElementById(creature_type + "_" + creature_attributes[i] + "_save_bonus").innerHTML = save_string;
+            }
+            for (var i = 0, len = creature_paragraph_names.length; i < len; i++) {
+                document.getElementById(creature_type + "_" + creature_paragraph_names[i]).innerHTML = "<ul style='max-width: 450px;'><h3>" + creature_paragraph_headers[i] + "</h3><hr><p>" + creature[creature_paragraph_names[i]] + "</p></ul>";
+                document.getElementById(creature_type + "_" + creature_paragraph_names[i]).hidden = (creature[creature_paragraph_names[i]] == "") ? true : false;
+            }
         });
+
+        function get_attribute_mod(attribute_score) {
+            if (attribute_score > 0) {
+                var attribute_mod = "";
+                if (attribute_score > 9) {
+                    attribute_mod += "+";
+                } else {
+                    attribute_mod += "-";
+                }
+                attribute_mod += Math.floor((attribute_score - 10) / 2).toString();
+                return attribute_mod;
+            } else {
+                return "-5";
+            }
+        }
 
         // Send start encounter signal to server
         function send_encounter_status(status)

@@ -111,17 +111,19 @@ table {
 
 .statblock {
     align-items: left;
-    column-width: 400px;
+    column-count: 3;
+    column-width: auto;
+    column-height: auto;
     width: 100%;
 }
 
 .statblock div {
     width: 400px;
+    break-inside: avoid;
 }
 
 .statblock ul {
     list-style-type: none;
-    display: inline-block;
     padding: 0px 10px 10px 10px;
     margin: 0px;
     width: 100%;
@@ -144,6 +146,10 @@ table {
     height: 100%;
 }
 
+.statblock .skill_span {
+    height: 24px;
+}
+
 .statblock label, .statblock h2, .statblock h3, .statblock p {
     color: darkred;
     text-align: left;
@@ -159,12 +165,12 @@ table {
     background-color: blanchedalmond;
     text-align: left;
     float: right;
+    min-height: 26px;
 }
 
 .statblock textarea {
     field-sizing: content;
     height: 100%;
-    min-height: 30px;
 }
 
 .large_textarea {
@@ -176,12 +182,21 @@ table {
 }
 
 .statblock .attribute_span {
-    align-items: center;
+    height: 36px;
+    background-color: rgb(255, 215, 185);
 }
 
 .statblock .attribute_label, .statblock .attribute_mod_label, .statblock .attribute_input {
     width: 45px;
     background-color: rgb(255, 215, 185);
+}
+
+.statblock .skill_label {
+    width: 135px;
+}
+
+.statblock .skill_input {
+    width: 45px;
 }
 
 .statblock .attribute_column_label {
@@ -200,8 +215,9 @@ table {
     padding: 0px 5px 0px 5px;
 }
 
-.statblock .attribute_span {
-    background-color: rgb(255, 215, 185);
+.statblock .attribute_span, .statblock .skill_span {
+    align-items: center;
     margin: 2px;
     padding: 5px;
+    width: 190px;
 }

@@ -4,123 +4,280 @@
     {{ character.name }}
 {% endblock %}
 
-{% block head %}
-    
-{% endblock %}
-
 {% block main %}
     {% if character.name %}
-        <h2>Edit Character: {{ character.name }}</h2>
+        <h2>Edit character: {{ character.name }}</h2>
     {% else %}
-        <h2>New Character</h2>
+        <h2>New character</h2>
     {% endif %}
-
+    
     <form action="/character/{{ character.creature_id }}/edit" method="post">
-
-        <ul class="formtable">
-                <li>
-                    <label style="width: 20%;">Name:</label>
-                    <input name="name" value="{{ character.name }}" type="text" autocomplete="off" required autofocus>
-                </li>
-                <li>
-                    <label style="width: 20%;">Size:</label>
-                    <input name="size" value="{{ character.size }}" type="text" autocomplete="off" required>
-                </li>
-                <li>
-                    <label style="width: 20%;">Alignment:</label>
-                    <input name="alignment" value="{{ character.alignment }}" type="text" autocomplete="off" required>
-                </li>
-                <li>
-                    <label style="width: 20%;">Species:</label>
-                    <input name="species" value="{{ character.species }}" type="text" autocomplete="off" required>
-                </li>
-                <li>
-                    <label style="width: 20%;">Class:</label>
-                    <input name="class" value="{{ character.class }}" type="text" autocomplete="off" required>
-                </li>
-                <li>
-                    <label style="width: 20%;">Background:</label>
-                    <input name="background" value="{{ character.background }}" type="text" autocomplete="off" required>
-                </li>
-                <li>
-                    <label style="width: 20%;">Proficiency Bonus:</label>
-                    <input name="prof_bonus" value="{{ character.prof_bonus }}" type="text" autocomplete="off" required>
-                </li>
-                <li>
-                    <label style="width: 20%;">AC:</label>
-                    <input name="armor_class" value="{{ character.armor_class }}" type="text" autocomplete="off" required>
-                </li>
-                <li>
-                    <label style="width: 20%;">HP:</label>
-                    <input name="max_hitpoints" value="{{ character.max_hitpoints }}" type="number" autocomplete="off" required>
-                </li>
-                <li>
-                    <label style="width: 20%;">Initiative Bonus:</label>
-                    <input name="initiative_bonus" value="{{ character.initiative_bonus }}" type="number" autocomplete="off" required>
-                </li>
-                <li>
-                    <label style="width: 20%;">Speed:</label>
-                    <input name="speed" value="{{ character.speed }}" type="text" autocomplete="off" required>
-                </li>
-
-                <li>
-                    <label style="width: 20%;">STR:</label>
-                    <input name="strength" value="{{ character.strength }}" type="number" autocomplete="off" required>
-                    <label style="width: 20%;">Save bonus:</label>
-                    <input name="strength_save_bonus" value="{{ character.strength_save_bonus }}" type="number" autocomplete="off" required>
-                </li>
-                <li>
-                    <label style="width: 20%;">DEX:</label>
-                    <input name="dexterity" value="{{ character.dexterity }}" type="number" autocomplete="off" required>
-                    <label style="width: 20%;">Save bonus:</label>
-                    <input name="dexterity_save_bonus" value="{{ character.dexterity_save_bonus }}" type="number" autocomplete="off" required>
-                </li>
-                <li>
-                    <label style="width: 20%;">CON:</label>
-                    <input name="constitution" value="{{ character.constitution }}" type="number" autocomplete="off" required>
-                    <label style="width: 20%;">Save bonus:</label>
-                    <input name="constitution_save_bonus" value="{{ character.constitution_save_bonus }}" type="number" autocomplete="off" required>
-                </li>
-                <li>
-                    <label style="width: 20%;">INT:</label>
-                    <input name="intelligence" value="{{ character.intelligence }}" type="number" autocomplete="off" required>
-                    <label style="width: 20%;">Save bonus:</label>
-                    <input name="intelligence_save_bonus" value="{{ character.intelligence_save_bonus }}" type="number" autocomplete="off" required>
-                </li>
-                <li>
-                    <label style="width: 20%;">WIS:</label>
-                    <input name="wisdom" value="{{ character.wisdom }}" type="number" autocomplete="off" required>
-                    <label style="width: 20%;">Save bonus:</label>
-                    <input name="wisdom_save_bonus" value="{{ character.wisdom_save_bonus }}" type="number" autocomplete="off" required>
-                </li>
-                <li>
-                    <label style="width: 20%;">CHA:</label>
-                    <input name="charisma" value="{{ character.charisma }}" type="number" autocomplete="off" required>
-                    <label style="width: 20%;">Save bonus:</label>
-                    <input name="charisma_save_bonus" value="{{ character.charisma_save_bonus }}" type="number" autocomplete="off" required>
-                </li>
-                
-                <li>
-                    <label style="width: 20%;">Skills:</label>
-                    <input name="skills" value="{{ character.skills }}" type="text" autocomplete="off">
-                </li>
-                <li>
-                    <label style="width: 20%;">Senses:</label>
-                    <input name="senses" value="{{ character.senses }}" type="text" autocomplete="off">
-                </li>
-                <li>
-                    <label style="width: 20%;">Languages:</label>
-                    <input name="languages" value="{{ character.languages }}" type="text" autocomplete="off">
-                </li>
-                <li>
-                    <label style="width: 20%;">Traits:</label>
-                    <textarea name="traits" type="text" autocomplete="off">{{ character.traits }}</textarea>
-                </li>
-        </ul>
-
+        <div class="statblock_container">
+            <span class="name_span">
+                <label class="name_label">Name</label>
+                <input class="name_input" name="name" value="{{ character.name }}" type="text" autocomplete="off" required autofocus>
+            </span>
+            <hr style="margin: 3px 5px 3px 5px">    
+            <div class="statblock">
+                <div>
+                    <ul style="max-width: 450px;">
+                        <li>
+                            <span>
+                                <label><strong>Species</strong></label>
+                                <textarea class="small_textarea" name="species" type="text" autocomplete="off" required>{{ character.species }}</textarea>
+                            </span>
+                        </li>
+                        <li>
+                            <span>
+                                <label><strong>Class</strong></label>
+                                <textarea class="small_textarea" name="class" type="text" autocomplete="off" required>{{ character.class }}</textarea>
+                            </span>
+                        </li>
+                        <li>
+                            <span>
+                                <label><strong>Background</strong></label>
+                                <textarea class="small_textarea" name="background" type="text" autocomplete="off" required>{{ character.background }}</textarea>
+                            </span>
+                        </li>
+                        <li>
+                            <span>
+                                <label><strong>Size</strong></label>
+                                <textarea class="small_textarea" name="size" type="text" autocomplete="off" required>{{ character.size }}</textarea>
+                            </span>
+                        </li>
+                        <li>
+                            <span>
+                                <label><strong>Alignment</strong></label>
+                                <textarea class="small_textarea" name="alignment" type="text" autocomplete="off" required>{{ character.alignment }}</textarea>
+                            </span>
+                        </li>
+                    </ul>
+                </div>
+                <div>
+                    <ul style="max-width: 450px;">
+                        <li>
+                            <span>
+                                <label><strong>AC</strong></label>
+                                <input class="number_input" name="armor_class" value="{{ character.armor_class }}" type="text" autocomplete="off" required>
+                            </span>
+                        </li>
+                        <li>
+                            <span>
+                                <label><strong>HP</strong></label>
+                                <input class="number_input" name="max_hitpoints" value="{{ character.max_hitpoints }}" type="number" autocomplete="off" required>
+                            </span>
+                        </li>
+                        <li>
+                            <span>
+                                <label><strong>Proficiency</strong></label>
+                                <input class="number_input" name="prof_bonus" value="{{ character.prof_bonus }}" type="number" autocomplete="off" required>
+                            </span>
+                        </li>
+                        <li>
+                            <span>
+                                <label><strong>Initiative</strong></label>
+                                <input class="number_input" name="initiative_bonus" value="{{ character.initiative_bonus }}" type="number" autocomplete="off" required>
+                            </span>
+                        </li>
+                        <li>
+                            <span>
+                                <label><strong>P. Perception</strong></label>
+                                <input class="number_input" name="senses" value="{{ character.senses }}" type="number" autocomplete="off" required>
+                            </span>
+                        </li>
+                        <li>
+                            <span>
+                                <label><strong>Speed</strong></label>
+                                <textarea class="small_textarea" name="speed" type="text" autocomplete="off">{{ character.speed }}</textarea>
+                            </span>
+                        </li>
+                    </ul>
+                </div>
+                <div>
+                    <h3>Attributes & Skills</h3>
+                    <hr>
+                    <ul style="max-width: 450px; display: grid; grid-template-columns: 190px 190px; column-gap: 4px;">
+                        <span class="attribute_column_span">
+                            <label class="attribute_column_label"></label>
+                            <label class="attribute_column_label"></label>
+                            <label class="attribute_column_label">MOD</label>
+                            <label class="attribute_column_label">SAVE</label>
+                        </span>
+                        <span class="attribute_column_span">
+                            <label class="attribute_column_label"></label>
+                            <label class="attribute_column_label"></label>
+                            <label class="attribute_column_label">MOD</label>
+                            <label class="attribute_column_label">SAVE</label>
+                        </span>
+                        <span class="attribute_span">
+                            <label class="attribute_label"><b>STR</b></label>
+                            <input class="attribute_input" name="strength" value="{{ character.strength }}" type="number" autocomplete="off" required onchange="attribute_change(this)">
+                            <label class="attribute_mod_label" id="strength_mod">{% if character.strength is defined %}{% if character.strength > 9 %}+{% endif %}{{ ((character.strength | float - 10) / 2) | round(0, 'floor') | int }}{% endif %}</label>
+                            <input class="attribute_input" name="strength_save_bonus" value="{% if character.strength_save_bonus is defined %}{% if character.strength_save_bonus >= 0 %}+{% endif %}{{ character.strength_save_bonus }}{% endif %}" type="text" autocomplete="off" required>
+                        </span>
+                        <span class="attribute_span">
+                            <label class="attribute_label"><b>INT</b></label>
+                            <input class="attribute_input" name="intelligence" value="{{ character.intelligence }}" type="number" autocomplete="off" required onchange="attribute_change(this)">
+                            <label class="attribute_mod_label" id="intelligence_mod">{% if character.intelligence is defined %}{% if character.intelligence > 9 %}+{% endif %}{{ ((character.intelligence | float - 10) / 2) | round(0, 'floor') | int }}{% endif %}</label>
+                            <input class="attribute_input" name="intelligence_save_bonus" value="{% if character.intelligence_save_bonus is defined %}{% if character.intelligence_save_bonus >= 0 %}+{% endif %}{{ character.intelligence_save_bonus }}{% endif %}" type="text" autocomplete="off" required>
+                        </span>
+                        <div style="width: 190px;">
+                            <span class="skill_span">
+                                <label class="skill_label">Athletics</label>
+                                <input class="skill_input" name="athletics" value="{{ character.athletics }}" type="number" autocomplete="off" required>
+                            </span>
+                        </div>
+                        <div style="width: 190px;">
+                            <span class="skill_span">
+                                <label class="skill_label">Arcana</label>
+                                <input class="skill_input" name="arcana" value="{{ character.arcana }}" type="number" autocomplete="off" required>
+                            </span>
+                            <span class="skill_span">
+                                <label class="skill_label">History</label>
+                                <input class="skill_input" name="history" value="{{ character.history }}" type="number" autocomplete="off" required>
+                            </span>
+                            <span class="skill_span">
+                                <label class="skill_label">Investigation</label>
+                                <input class="skill_input" name="investigation" value="{{ character.investigation }}" type="number" autocomplete="off" required>
+                            </span>
+                            <span class="skill_span">
+                                <label class="skill_label">Nature</label>
+                                <input class="skill_input" name="nature" value="{{ character.nature }}" type="number" autocomplete="off" required>
+                            </span>
+                            <span class="skill_span">
+                                <label class="skill_label">Religion</label>
+                                <input class="skill_input" name="religion" value="{{ character.religion }}" type="number" autocomplete="off" required>
+                            </span>
+                        </div>
+                        <span class="attribute_span">
+                            <label class="attribute_label"><b>DEX</b></label>
+                            <input class="attribute_input" name="dexterity" value="{{ character.dexterity }}" type="number" autocomplete="off" required onchange="attribute_change(this)">
+                            <label class="attribute_mod_label" id="dexterity_mod">{% if character.dexterity is defined %}{% if character.dexterity > 9 %}+{% endif %}{{ ((character.dexterity | float - 10) / 2) | round(0, 'floor') | int }}{% endif %}</label>
+                            <input class="attribute_input" name="dexterity_save_bonus" value="{% if character.dexterity_save_bonus is defined %}{% if character.dexterity_save_bonus >= 0 %}+{% endif %}{{ character.dexterity_save_bonus }}{% endif %}" type="text" autocomplete="off" required>
+                        </span>
+                        <span class="attribute_span">
+                            <label class="attribute_label"><b>WIS</b></label>
+                            <input class="attribute_input" name="wisdom" value="{{ character.wisdom }}" type="number" autocomplete="off" required onchange="attribute_change(this)">
+                            <label class="attribute_mod_label" id="wisdom_mod">{% if character.wisdom is defined %}{% if character.wisdom > 9 %}+{% endif %}{{ ((character.wisdom | float - 10) / 2) | round(0, 'floor') | int }}{% endif %}</label>
+                            <input class="attribute_input" name="wisdom_save_bonus" value="{% if character.wisdom_save_bonus is defined %}{% if character.wisdom_save_bonus >= 0 %}+{% endif %}{{ character.wisdom_save_bonus }}{% endif %}" type="text" autocomplete="off" required>
+                        </span>
+                        <div style="width: 190px;">
+                            <span class="skill_span">
+                                <label class="skill_label">Acrobatics</label>
+                                <input class="skill_input" name="acrobatics" value="{{ character.acrobatics }}" type="number" autocomplete="off" required>
+                            </span>
+                            <span class="skill_span">
+                                <label class="skill_label">Sleight of Hand</label>
+                                <input class="skill_input" name="sleight_of_hand" value="{{ character.sleight_of_hand }}" type="number" autocomplete="off" required>
+                            </span>
+                            <span class="skill_span">
+                                <label class="skill_label">Stealth</label>
+                                <input class="skill_input" name="stealth" value="{{ character.stealth }}" type="number" autocomplete="off" required>
+                            </span>
+                        </div>
+                        <div style="width: 190px;">
+                            <span class="skill_span">
+                                <label class="skill_label">Animal Handling</label>
+                                <input class="skill_input" name="animal_handling" value="{{ character.animal_handling }}" type="number" autocomplete="off" required>
+                            </span>
+                            <span class="skill_span">
+                                <label class="skill_label">Insight</label>
+                                <input class="skill_input" name="insight" value="{{ character.insight }}" type="number" autocomplete="off" required>
+                            </span>
+                            <span class="skill_span">
+                                <label class="skill_label">Medicine</label>
+                                <input class="skill_input" name="medicine" value="{{ character.medicine }}" type="number" autocomplete="off" required>
+                            </span>
+                            <span class="skill_span">
+                                <label class="skill_label">Perception</label>
+                                <input class="skill_input" name="perception" value="{{ character.perception }}" type="number" autocomplete="off" required>
+                            </span>
+                            <span class="skill_span">
+                                <label class="skill_label">Survival</label>
+                                <input class="skill_input" name="survival" value="{{ character.survival }}" type="number" autocomplete="off" required>
+                            </span>
+                        </div>
+                        <span class="attribute_span">
+                            <label class="attribute_label"><b>CON</b></label>
+                            <input class="attribute_input" name="constitution" value="{{ character.constitution }}" type="number" autocomplete="off" required onchange="attribute_change(this)">
+                            <label class="attribute_mod_label" id="constitution_mod">{% if character.constitution is defined %}{% if character.constitution > 9 %}+{% endif %}{{ ((character.constitution | float - 10) / 2) | round(0, 'floor') | int }}{% endif %}</label>
+                            <input class="attribute_input" name="constitution_save_bonus" value="{% if character.constitution_save_bonus is defined %}{% if character.constitution_save_bonus >= 0 %}+{% endif %}{{ character.constitution_save_bonus }}{% endif %}" type="text" autocomplete="off" required>
+                        </span>
+                        <span class="attribute_span">
+                            <label class="attribute_label"><b>CHA</b></label>
+                            <input class="attribute_input" name="charisma" value="{{ character.charisma }}" type="number" autocomplete="off" required onchange="attribute_change(this)">
+                            <label class="attribute_mod_label" id="charisma_mod">{% if character.charisma is defined %}{% if character.charisma > 9 %}+{% endif %}{{ ((character.charisma | float - 10) / 2) | round(0, 'floor') | int }}{% endif %}</label>
+                            <input class="attribute_input" name="charisma_save_bonus" value="{% if character.charisma_save_bonus is defined %}{% if character.charisma_save_bonus >= 0 %}+{% endif %}{{ character.charisma_save_bonus }}{% endif %}" type="text" autocomplete="off" required>
+                        </span>
+                        <div style="width: 190px;">
+                        </div>
+                        <div style="width: 190px;">
+                            <span class="skill_span">
+                                <label class="skill_label">Deception</label>
+                                <input class="skill_input" name="deception" value="{{ character.deception }}" type="number" autocomplete="off" required>
+                            </span>
+                            <span class="skill_span">
+                                <label class="skill_label">Intimidation</label>
+                                <input class="skill_input" name="intimidation" value="{{ character.intimidation }}" type="number" autocomplete="off" required>
+                            </span>
+                            <span class="skill_span">
+                                <label class="skill_label">Performance</label>
+                                <input class="skill_input" name="performance" value="{{ character.performance }}" type="number" autocomplete="off" required>
+                            </span>
+                            <span class="skill_span">
+                                <label class="skill_label">Persuasion</label>
+                                <input class="skill_input" name="persuasion" value="{{ character.persuasion }}" type="number" autocomplete="off" required>
+                            </span>
+                        </div>
+                    </ul>
+                </div>
+                <div>
+                    <ul style="max-width: 450px;">
+                        <h3>Proficiencies</h3>
+                        <hr>
+                        <textarea class="large_textarea" name="languages" type="text" autocomplete="off">{{ character.languages }}</textarea>
+                    </ul>
+                </div>
+                <div>
+                    <ul style="max-width: 450px;">
+                        <h3>Species Traits</h3>
+                        <hr>
+                        <textarea class="large_textarea" name="species_traits" type="text" autocomplete="off">{{ character.species_traits }}</textarea>
+                    </ul>
+                </div>
+                <div>
+                    <ul style="max-width: 450px;">
+                        <h3>Feats</h3>
+                        <hr>
+                        <textarea class="large_textarea" name="feats" type="text" autocomplete="off">{{ character.feats }}</textarea>
+                    </ul>
+                </div>
+                <div>
+                    <ul style="max-width: 450px;">
+                        <h3>Class Features</h3>
+                        <hr>
+                        <textarea class="large_textarea" name="traits" type="text" autocomplete="off">{{ character.traits }}</textarea>
+                    </ul>
+                </div>
+                <span>
+                    <button type="submit" class="btn btn-primary">Confirm</button>
+                </span>
+            </div>
+        </div>
         {% include "editpage_hotbars.html" %}
 
-        <button type="submit" class="btn btn-primary">Confirm</button>
-    </form>
-
+        <script>
+            function attribute_change(htmlElement) {
+                var attribute = htmlElement.getAttribute("name");
+                var attribute_score = htmlElement.value;
+                var attribute_mod = "";
+                if (attribute_score > 9) {
+                    attribute_mod += "+";
+                }
+                attribute_mod += Math.floor((attribute_score - 10) / 2).toString();
+                console.log(attribute, attribute_score, attribute_mod);
+                document.getElementById(attribute + "_mod").innerHTML = attribute_mod;
+            }
+        </script>
+    </form>        
 {% endblock %}
