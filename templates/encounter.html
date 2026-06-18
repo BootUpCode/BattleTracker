@@ -20,34 +20,40 @@
     {% endif %}
 
     <h2>Combatants</h2>
-    <ul id="combatants" class="formtable">
+    <div id="combatants" class="formtable" style="display: grid; grid-template-columns: 45px 300px 45px 120px 60px 60px;">
         {% for combatant in combatants %}
-            <li id="{{ combatant.id }}">
-                <span>
-                    <label>{{ combatant.id }}</label>
-                    <label>{{ combatant.user_id }}</label>
-                    <label>{{ combatant.creature_id }}</label>
-                    <label id="name_{{ combatant.id }}" {% if encounter.turn_combatant_id == combatant.id %} style="font-weight: bold;"{% endif %}>{{ combatant.name }}</label>
-                    <label id="label_initiative_bonus_{{ combatant.id }}" hidden>{{ combatant.initiative_bonus }}</label>
-                    {% if combatant.user_id == user or encounter.dm_id == user %}
-                        <input id="input_init_{{ combatant.id }}" onchange="send_init('{{ combatant.id }}', this.value)" type="text" value="{% if combatant.initiative == None %}{% else %}{{ combatant.initiative }}{% endif %}">
-                        <input id="input_hp_{{ combatant.id }}" onchange="send_hp('{{ combatant.id }}', this.value)" type="text" value="{{ combatant.current_hitpoints }}">
-                    {% endif %}
-                    <label id="label_init_{{ combatant.id }}" {% if combatant.user_id == user or encounter.dm_id == user %}hidden{% endif %}>{% if combatant.initiative == None %}{% else %}{{ combatant.initiative }}{% endif %}</label>
-                    <label id="label_hp_{{ combatant.id }}"{% if combatant.user_id == user or encounter.dm_id == user %}hidden{% endif %}>{{ combatant.current_hitpoints }}</label>
-                    <label>/{{ combatant.max_hitpoints }}</label>
-                    {% if combatant.user_id == user or encounter.dm_id == user %}
-                        <form action="/{% if combatant.is_player %}character{% else %}monster{% endif %}/{{ combatant.creature_id }}" method="get">
-                            <button class="btn btn-primary" type="submit">View</button>
-                        </form>
-                    {% endif %}
-                    {% if encounter.dm_id == user %}
-                        <button class="btn btn-primary" type="button" onclick="request_creature_info('{{ combatant.creature_id }}', '{{ combatant.is_player }}')">Details</button>
-                    {% endif %}
-                </span>
-            </li>
+            <div>
+                {% if combatant.user_id == user or encounter.dm_id == user %}
+                    <input id="input_init_{{ combatant.id }}" onchange="send_init('{{ combatant.id }}', this.value)" type="text" value="{% if combatant.initiative == None %}{% else %}{{ combatant.initiative }}{% endif %}">
+                {% endif %}
+                <label id="label_init_{{ combatant.id }}" {% if combatant.user_id == user or encounter.dm_id == user %}hidden{% endif %}>{% if combatant.initiative == None %}{% else %}{{ combatant.initiative }}{% endif %}</label>
+            </div>
+            <label id="name_{{ combatant.id }}" {% if encounter.turn_combatant_id == combatant.id %} style="font-weight: bold;"{% endif %}>{{ combatant.name }}</label>
+            <label id="label_initiative_bonus_{{ combatant.id }}" hidden>{{ combatant.initiative_bonus }}</label>
+            <label>HP: </label>
+            <span id="span_hp_{{ combatant.id }}">
+                {% if combatant.user_id == user or encounter.dm_id == user %}
+                    <input id="input_hp_{{ combatant.id }}" onchange="send_hp('{{ combatant.id }}', this.value)" type="text" value="{{ combatant.current_hitpoints }}">
+                    <label>/ {{ combatant.max_hitpoints }}</label>
+                {% else %}
+                    {% set hp_percentage = (combatant.current_hitpoints / combatant.max_hitpoints) * 100 %}
+                    <label {% if hp_percentage > 75 %}style="color: green;"{% elif hp_percentage > 25 %}style="color: orange;"{% elif hp_percentage > 0 %}style="color: red;"{% else %}style="color: darkred;"{% endif %}>{% if hp_percentage > 75 %}healthy{% elif hp_percentage > 25 %}injured{% elif hp_percentage > 0 %}wounded{% else %}unconscious{% endif %}</label>
+                {% endif %}
+            </span>
+            <div>
+                {% if combatant.user_id == user or encounter.dm_id == user %}
+                    <form action="/{% if combatant.is_player %}character{% else %}monster{% endif %}/{{ combatant.creature_id }}" method="get">
+                        <button class="btn btn-primary" type="submit">View</button>
+                    </form>
+                {% endif %}
+            </div>
+            <div>
+                {% if encounter.dm_id == user %}
+                    <button class="btn btn-primary" type="button" onclick="request_creature_info('{{ combatant.creature_id }}', '{{ combatant.is_player }}')">Details</button>
+                {% endif %}
+            </div>
         {% endfor %}
-    </ul>
+    </div>
 
     <div id="monster_statblock_container" hidden>
         {% include "monster_statblock.html" %}
@@ -79,41 +85,37 @@
                  // Replace elements in sorted order
                 combatant_table = document.getElementById("combatants");
                 combatant_table.innerHTML = "";
+                var table_string = "";
                 combatants.forEach(function (combatant) {
-                    var combatant_element = document.createElement("li");
-                    combatant_element.id = combatant.id;
-                    combatant_table.appendChild(combatant_element);
-                    combatant_string = `<span><label>` + combatant.id + `</label><label>` + combatant.user_id + `</label><label>` + combatant.creature_id + `</label><label id="name_` + combatant.id + `"`
-                    if (combatant.id == encounter_turn_combatant_id) {
-                        combatant_string += ` style="font-weight: bold;"` }
-                    combatant_string += `>` + combatant.name + `</label>
-                        <label id="label_initiative_bonus_` + combatant.id + `" hidden>` + combatant.initiative_bonus + `</label>`
-                    if (combatant.user_id == user_id || encounter_dm_id == user_id) {
-                        combatant_string += `<input id="input_init_` + combatant.id + `" onchange="send_init('` + combatant.id + `', this.value)" type="text" value="`
-                        if (combatant.initiative != null) {
-                            combatant_string += combatant.initiative }
-                        combatant_string += `"><input id="input_hp_` + combatant.id + `" onchange="send_hp('` + combatant.id + `', this.value)" type="text" value="` + combatant.current_hitpoints + `">` }
+                    var is_user = (combatant.user_id == user_id || encounter_dm_id == user_id) ? true : false;
+                    if (combatant.initiative == null) { combatant.initiative = ""; }
+
+                    var combatant_string = "<div>";
+                    if (is_user) { combatant_string += `<input id="input_init_` + combatant.id + `" onchange="send_init('` + combatant.id + `', this.value)" type="text" value="` + combatant.initiative + `">`; }
                     combatant_string += `<label id="label_init_` + combatant.id + `"`
-                    if (combatant.user_id == user_id || encounter_dm_id == user_id) {
-                        combatant_string += ` hidden` }
-                    combatant_string += `>`
-                    if (combatant.initiative != null) { 
-                        combatant_string += combatant.initiative }
-                    combatant_string += `</label><label id="label_hp_` + combatant.id + `"`
-                    if (combatant.user_id == user_id || encounter_dm_id == user_id) {
-                        combatant_string += `hidden` }
-                    combatant_string += `>` + combatant.current_hitpoints + `</label><label>/` + combatant.max_hitpoints + `</label>`
-                    if (combatant.user_id == user_id || encounter_dm_id == user_id) {
-                        combatant_string += `<form action="/`
-                        if (combatant.is_player) { combatant_string += `character` }
-                        else { combatant_string += `monster` }
-                        combatant_string += `/` + combatant.creature_id + `" method="get">
-                                <button class="btn btn-primary" type="submit">View</button>
-                            </form>` }
-                    if (encounter_dm_id == user_id) {
-                            combatant_string += `<button class="btn btn-primary" type="button" onclick="request_creature_info('` + combatant.creature_id + `', '` + combatant.is_player + `')">Details</button></span>` }
-                combatant_element.innerHTML = combatant_string;
+                    if (is_user) { combatant_string += `hidden`; }
+                    combatant_string += `>` + combatant.initiative + `</label></div><label id="name_` + combatant.id + `"`;
+                    if (encounter_turn_combatant_id == combatant.id) { combatant_string += `style="font-weight: bold;"`; }
+                    combatant_string += `>` + combatant.name + `</label><label id="label_initiative_bonus_` + combatant.id + `" hidden>` + combatant.initiative_bonus + `</label><label>HP: </label><span>`;
+                    if (is_user) { combatant_string += `<input id="input_hp_` + combatant.id + `" onchange="send_hp('` + combatant.id + `', this.value)" type="text" value="` + combatant.current_hitpoints + `">
+                        <label>/ ` + combatant.max_hitpoints + `</label>`; }
+                    else { var hp_percentage = (combatant.current_hitpoints / combatant.max_hitpoints) * 100;
+                        if (hp_percentage > 75) { var style_string = `style="color: green;"`; var display_string = `healthy`; }
+                        else if (hp_percentage > 25) { var style_string = `style="color: orange;"`; var display_string = `injured`; }
+                        else if (hp_percentage > 0) { var style_string = `style="color: red;"`; var display_string = `wounded`; }
+                        else { var style_string = `style="color: darkred;"`; var display_string = `unconscious`; }
+                        combatant_string += `<label ` + style_string + `>` + display_string + `</label>`;
+                    }
+                    combatant_string += `</span><div>`;
+                    if (is_user) { var creature_type = (combatant.is_player) ? "character" : "monster";
+                        combatant_string += `<form action="/` + creature_type + `/` + combatant.creature_id + `" method="get">
+                        <button class="btn btn-primary" type="submit">View</button></form>` }
+                    combatant_string += `</div><div>`;
+                    if (encounter_dm_id == user_id) { combatant_string += `<button class="btn btn-primary" type="button" onclick="request_creature_info('` + combatant.creature_id + `', '` + combatant.is_player + `')">Details</button>`; }
+                    combatant_string += `</div>`;
+                    table_string += combatant_string;
                 });
+                combatant_table.innerHTML = table_string;
             }
         });
 
@@ -129,16 +131,18 @@
         });
 
         // Listen for hitpoint updates from server
-        socket.on("hp_updated", function({combatant_id, current_hitpoints}) {
-            var input_hp_element = document.getElementById("input_hp_" + combatant_id);
-            var label_hp_element = document.getElementById("label_hp_" + combatant_id);
-            if (input_hp_element)
-            {
-                input_hp_element.value = current_hitpoints;
+        socket.on("hp_updated", function({combatant}) {
+            if (combatant.user_id == user_id || encounter_dm_id == user_id) {
+                document.getElementById("input_hp_" + combatant.id).value = combatant.current_hitpoints;
             }
-            else if (label_hp_element)
+            else
             {
-                label_hp_element.innerHTML = current_hitpoints;
+                var hp_percentage = (combatant.current_hitpoints / combatant.max_hitpoints) * 100;
+                if (hp_percentage > 75) { var style_string = `style="color: green;"`; var display_string = `healthy`; }
+                else if (hp_percentage > 25) { var style_string = `style="color: orange;"`; var display_string = `injured`; }
+                else if (hp_percentage > 0) { var style_string = `style="color: red;"`; var display_string = `wounded`; }
+                else { var style_string = `style="color: darkred;"`; var display_string = `unconscious`; }
+                document.getElementById("span_hp_" + combatant.id).innerHTML = `<label ` + style_string + `>` + display_string + `</label>`;
             }
         });
 
@@ -159,60 +163,66 @@
 
         // Listen for creature data from server
         socket.on("creature_details_updated", function({creature_id, creature}) {
-            document.getElementById("monster_statblock_container").hidden = creature.is_player;
-            document.getElementById("character_statblock_container").hidden = !creature.is_player;
-
             if (document.getElementById((creature.is_player == true ? "character" : "monster") + "_creature_id").innerHTML == creature.creature_id.toString()) {
-                document.getElementById((creature.is_player == true ? "character" : "monster") + "_statblock_container").hidden = !document.getElementById(creature_type + "statblock_container").hidden;
+                document.getElementById((creature.is_player == true ? "character" : "monster") + "_statblock_container").hidden = !document.getElementById((creature.is_player == true ? "character" : "monster") + "_statblock_container").hidden;
+                document.getElementById((creature.is_player == true ? "monster" : "character") + "_statblock_container").hidden = true;
             }
             else {
-                document.getElementById((creature.is_player == true ? "character" : "monster") + "_statblock_container").hidden = false;
                 document.getElementById((creature.is_player == true ? "character" : "monster") + "_creature_id").innerHTML = creature.creature_id;
-            }
+                document.getElementById("monster_statblock_container").hidden = creature.is_player;
+                document.getElementById("character_statblock_container").hidden = !creature.is_player;
 
-            creature_property_names = ["name", "armor_class", "initiative_bonus", "max_hitpoints", "speed"];
-            creature_property_headers = ["", "AC ", "Initiative ", "HP ", "Speed "];
-            creature_attributes = ["strength", "dexterity", "constitution", "intelligence", "wisdom", "charisma"];
+                creature_property_names = ["name", "armor_class", "max_hitpoints", "speed"];
+                creature_property_headers = ["", "AC ", "HP ", "Speed "];
+                creature_number_names = ["initiative_bonus"];
+                creature_number_headers = ["Initiative "];
+                creature_attributes = ["strength", "dexterity", "constitution", "intelligence", "wisdom", "charisma"];
 
-            if (creature.is_player) {
-                var creature_type = "character";
-                document.getElementById(creature_type + "_type").innerHTML = "<em>" + creature.species + " " + creature.class + ", " + creature.alignment + "</em>";
-                creature_property_names.push("background", "size", "prof_bonus", "senses");
-                creature_property_headers.push("Background ", "Size ", "Proficiency ", "P. Perception ");
-                var creature_skill_names = ["acrobatics", "animal_handling", "arcana", "athletics", "deception", "history", "insight", "intimidation", 
-                                            "investigation", "medicine", "nature", "perception", "performance", "persuasion", "religion", "sleight_of_hand", "stealth", "survival"]
-                var creature_paragraph_names = ["languages", "species_traits", "feats", "traits"];
-                var creature_paragraph_headers = ["Proficiencies", "Species Traits", "Feats", "Class Features"];
-                for (var i = 0, len = creature_skill_names.length; i < len; i++) {
-                    document.getElementById(creature_type + "_" + creature_skill_names[i]).innerHTML = creature[creature_skill_names[i]];
+                if (creature.is_player) {
+                    var creature_type = "character";
+                    document.getElementById(creature_type + "_type").innerHTML = "<em>" + creature.species + " " + creature.class + ", " + creature.alignment + "</em>";
+                    creature_property_names.push("background", "size", "prof_bonus", "senses");
+                    creature_property_headers.push("Background ", "Size ", "Proficiency ", "P. Perception ");
+                    creature_number_names.push("prof_bonus");
+                    creature_number_headers.push("Proficiency ");
+                    var creature_skill_names = ["acrobatics", "animal_handling", "arcana", "athletics", "deception", "history", "insight", "intimidation", 
+                                                "investigation", "medicine", "nature", "perception", "performance", "persuasion", "religion", "sleight_of_hand", "stealth", "survival"]
+                    var creature_paragraph_names = ["languages", "species_traits", "feats", "traits"];
+                    var creature_paragraph_headers = ["Proficiencies", "Species Traits", "Feats", "Class Features"];
+                    for (var i = 0, len = creature_skill_names.length; i < len; i++) {
+                        document.getElementById(creature_type + "_" + creature_skill_names[i]).innerHTML = (creature[creature_skill_names[i]] >= 0 ? "+" : "") + creature[creature_skill_names[i]];
+                    }
+                } else {
+                    var creature_type = "monster";
+                    document.getElementById(creature_type + "_type").innerHTML = "<em>" + creature.size + " " + creature.type + ", " + creature.alignment + "</em>";
+                    var creature_skill_names = ["skills", "vulnerabilities", "resistances", "immunities", "senses", "languages", "challenge_rating"];
+                    var creature_skill_headers = ["Skills ", "Vulnerabilities ", "Resistances ", "Immunites ", "Senses ", "Languages ", "CR "];
+                    var creature_paragraph_names = ["traits", "actions", "bonus_actions", "reactions", "legendary_actions"];
+                    var creature_paragraph_headers = ["Traits", "Actions", "Bonus Actions", "Reactions", "Legendary Actions"];
+                    for (var i = 0, len = creature_skill_names.length; i < len; i++) {
+                        document.getElementById(creature_type + "_" + creature_skill_names[i]).innerHTML = "<span><label><strong>" + creature_skill_headers[i] + "</strong>" + creature[creature_skill_names[i]] + "</label></span>";
+                        document.getElementById(creature_type + "_" + creature_skill_names[i]).hidden = (creature[creature_skill_names[i]] == "") ? true : false;
+                    }
                 }
-            } else {
-                var creature_type = "monster";
-                document.getElementById(creature_type + "_type").innerHTML = "<em>" + creature.size + " " + creature.type + ", " + creature.alignment + "</em>";
-                var creature_skill_names = ["skills", "vulnerabilities", "resistances", "immunities", "senses", "languages", "challenge_rating"];
-                var creature_skill_headers = ["Skills ", "Vulnerabilities ", "Resistances ", "Immunites ", "Senses ", "Languages ", "CR "];
-                var creature_paragraph_names = ["traits", "actions", "bonus_actions", "reactions", "legendary_actions"];
-                var creature_paragraph_headers = ["Traits", "Actions", "Bonus Actions", "Reactions", "Legendary Actions"];
-                for (var i = 0, len = creature_skill_names.length; i < len; i++) {
-                    document.getElementById(creature_type + "_" + creature_skill_names[i]).innerHTML = "<span><label><strong>" + creature_skill_headers[i] + "</strong>" + creature[creature_skill_names[i]] + "</label></span>";
-                    document.getElementById(creature_type + "_" + creature_skill_names[i]).hidden = (creature[creature_skill_names[i]] == "") ? true : false;
+                
+                for (var i = 0, len = creature_property_names.length; i < len; i++) {
+                    document.getElementById(creature_type + "_" + creature_property_names[i]).innerHTML = "<strong>" + creature_property_headers[i] + "</strong>" + creature[creature_property_names[i]];
                 }
-            }
-            
-            for (var i = 0, len = creature_property_names.length; i < len; i++) {
-                document.getElementById(creature_type + "_" + creature_property_names[i]).innerHTML = "<strong>" + creature_property_headers[i] + "</strong>" + creature[creature_property_names[i]];
-            }
-            for (var i = 0, len = creature_attributes.length; i < len; i++) {
-                document.getElementById(creature_type + "_" + creature_attributes[i]).innerHTML = creature[creature_attributes[i]];
-                document.getElementById(creature_type + "_" + creature_attributes[i] + "_mod").innerHTML = get_attribute_mod(creature[creature_attributes[i]]);
-                var save_string = "";
-                if (parseInt(creature[(creature_attributes[i] + "_save_bonus")]) >= 0) { save_string += "+";}
-                save_string += creature[(creature_attributes[i] + "_save_bonus")];
-                document.getElementById(creature_type + "_" + creature_attributes[i] + "_save_bonus").innerHTML = save_string;
-            }
-            for (var i = 0, len = creature_paragraph_names.length; i < len; i++) {
-                document.getElementById(creature_type + "_" + creature_paragraph_names[i]).innerHTML = "<ul style='max-width: 450px;'><h3>" + creature_paragraph_headers[i] + "</h3><hr><p>" + creature[creature_paragraph_names[i]] + "</p></ul>";
-                document.getElementById(creature_type + "_" + creature_paragraph_names[i]).hidden = (creature[creature_paragraph_names[i]] == "") ? true : false;
+                for (var i = 0, len = creature_number_names.length; i < len; i++) {
+                    document.getElementById(creature_type + "_" + creature_number_names[i]).innerHTML = "<strong>" + creature_number_headers[i] + "</strong>" + (creature[creature_number_names[i]] >= 0 ? "+" : "") + creature[creature_number_names[i]];
+                }
+                for (var i = 0, len = creature_attributes.length; i < len; i++) {
+                    document.getElementById(creature_type + "_" + creature_attributes[i]).innerHTML = creature[creature_attributes[i]];
+                    document.getElementById(creature_type + "_" + creature_attributes[i] + "_mod").innerHTML = get_attribute_mod(creature[creature_attributes[i]]);
+                    var save_string = "";
+                    if (parseInt(creature[(creature_attributes[i] + "_save_bonus")]) >= 0) { save_string += "+";}
+                    save_string += creature[(creature_attributes[i] + "_save_bonus")];
+                    document.getElementById(creature_type + "_" + creature_attributes[i] + "_save_bonus").innerHTML = save_string;
+                }
+                for (var i = 0, len = creature_paragraph_names.length; i < len; i++) {
+                    document.getElementById(creature_type + "_" + creature_paragraph_names[i]).innerHTML = "<ul style='max-width: 450px;'><h3>" + creature_paragraph_headers[i] + "</h3><hr><p style='white-space: pre-line;'>" + creature[creature_paragraph_names[i]] + "</p></ul>";
+                    document.getElementById(creature_type + "_" + creature_paragraph_names[i]).hidden = (creature[creature_paragraph_names[i]] == "") ? true : false;
+                }
             }
         });
 

@@ -24,7 +24,7 @@
                         <span style="justify-content: left;">
                             <label id="character_armor_class"><strong>AC </strong>{% if character is defined %}{{ character.armor_class }}{% endif %}</label>
                             <span style="width: 30px;"></span>
-                            <label id="character_initiative_bonus"><strong>Initiative </strong>{% if character is defined %}{{ character.initiative_bonus }}{% endif %}</label>
+                            <label id="character_initiative_bonus"><strong>Initiative </strong>{% if character is defined %}{% if character.initiative_bonus >= 0 %}+{% endif %}{{ character.initiative_bonus }}{% endif %}</label>
                         </span>
                     </li>
                     <li>
@@ -34,7 +34,7 @@
                     </li>
                     <li>
                         <span style="justify-content: left;">
-                            <label id="character_prof_bonus"><strong>Proficiency </strong>{% if character is defined %}{{ character.prof_bonus }}{% endif %}</label>
+                            <label id="character_prof_bonus"><strong>Proficiency </strong>{% if character is defined %}{% if character.prof_bonus >= 0 %}+{% endif %}{{ character.prof_bonus }}{% endif %}</label>
                             <span style="width: 30px;"></span>
                             <label id="character_senses"><strong>P. Perception </strong>{% if character is defined %}{{ character.senses }}{% endif %}</label>
                         </span>
@@ -47,8 +47,10 @@
                 </ul>
             </div>
             <div>
-                <h3>Attributes & Skills</h3>
-                <hr>
+                <ul style="max-width: 450px;">
+                    <h3>Attributes & Skills</h3>
+                    <hr>
+                </ul>
                 <ul style="max-width: 450px;">
                     <li style="min-height: 20px;">
                         <span class="attribute_column_span">
@@ -79,34 +81,48 @@
                         </span>
                     </li>
                     <li>
-                        <div style="width: 190px;">
+                        <div style="width: 190px; margin: 2px 2px 2px 0px;">
                             <span class="skill_span">
                                 <label class="skill_label">Athletics</label>
-                                <label id="character_athletics" class="skill_input">{% if character is defined %}{{ character.athletics }}{% endif %}</label>
+                                <label id="character_athletics" class="skill_input">{% if character is defined %}{% if character.athletics >= 0 %}+{% endif %}{{ character.athletics }}{% endif %}</label>
                             </span>
                         </div>
-                        <div style="width: 190px;">
+                        <div style="width: 190px; margin: 2px 2px 2px 0px;">
                             <span class="skill_span">
                                 <label class="skill_label">Arcana</label>
-                                <label id="character_arcana" class="skill_input">{% if character is defined %}{{ character.arcana }}{% endif %}</label>
+                                <label id="character_arcana" class="skill_input">{% if character is defined %}{% if character.arcana >= 0 %}+{% endif %}{{ character.arcana }}{% endif %}</label>
                             </span>
                             <span class="skill_span">
                                 <label class="skill_label">History</label>
-                                <label id="character_history" class="skill_input">{% if character is defined %}{{ character.history }}{% endif %}</label>
+                                <label id="character_history" class="skill_input">{% if character is defined %}{% if character.history >= 0 %}+{% endif %}{{ character.history }}{% endif %}</label>
                             </span>
                             <span class="skill_span">
                                 <label class="skill_label">Investigation</label>
-                                <label id="character_investigation" class="skill_input">{% if character is defined %}{{ character.investigation }}{% endif %}</label>
+                                <label id="character_investigation" class="skill_input">{% if character is defined %}{% if character.investigation >= 0 %}+{% endif %}{{ character.investigation }}{% endif %}</label>
                             </span>
                             <span class="skill_span">
                                 <label class="skill_label">Nature</label>
-                                <label id="character_nature" class="skill_input">{% if character is defined %}{{ character.nature }}{% endif %}</label>
+                                <label id="character_nature" class="skill_input">{% if character is defined %}{% if character.nature >= 0 %}+{% endif %}{{ character.nature }}{% endif %}</label>
                             </span>
                             <span class="skill_span">
                                 <label class="skill_label">Religion</label>
-                                <label id="character_religion" class="skill_input">{% if character is defined %}{{ character.religion }}{% endif %}</label>
+                                <label id="character_religion" class="skill_input">{% if character is defined %}{% if character.religion >= 0 %}+{% endif %}{{ character.religion }}{% endif %}</label>
                             </span>
                         </div>
+                    </li>
+                    <li style="min-height: 20px;">
+                        <span class="attribute_column_span">
+                            <label class="attribute_column_label"></label>
+                            <label class="attribute_column_label"></label>
+                            <label class="attribute_column_label">MOD</label>
+                            <label class="attribute_column_label">SAVE</label>
+                        </span>
+                        <span class="attribute_column_span">
+                            <label class="attribute_column_label"></label>
+                            <label class="attribute_column_label"></label>
+                            <label class="attribute_column_label">MOD</label>
+                            <label class="attribute_column_label">SAVE</label>
+                        </span>
                     </li>
                     <li>
                         <span class="attribute_span">
@@ -123,42 +139,56 @@
                         </span>
                     </li>
                     <li>
-                        <div style="width: 190px;">
+                        <div style="width: 190px; margin: 2px 2px 2px 0px;">
                             <span class="skill_span">
                                 <label class="skill_label">Acrobatics</label>
-                                <label id="character_acrobatics" class="skill_input">{% if character is defined %}{{ character.acrobatics }}{% endif %}</label>
+                                <label id="character_acrobatics" class="skill_input">{% if character is defined %}{% if character.acrobatics >= 0 %}+{% endif %}{{ character.acrobatics }}{% endif %}</label>
                             </span>
                             <span class="skill_span">
                                 <label class="skill_label">Sleight of Hand</label>
-                                <label id="character_sleight_of_hand" class="skill_input">{% if character is defined %}{{ character.sleight_of_hand }}{% endif %}</label>
+                                <label id="character_sleight_of_hand" class="skill_input">{% if character is defined %}{% if character.sleight_of_hand >= 0 %}+{% endif %}{{ character.sleight_of_hand }}{% endif %}</label>
                             </span>
                             <span class="skill_span">
                                 <label class="skill_label">Stealth</label>
-                                <label id="character_stealth" class="skill_input">{% if character is defined %}{{ character.stealth }}{% endif %}</label>
+                                <label id="character_stealth" class="skill_input">{% if character is defined %}{% if character.stealth >= 0 %}+{% endif %}{{ character.stealth }}{% endif %}</label>
                             </span>
                         </div>
-                        <div style="width: 190px;">
+                        <div style="width: 190px; margin: 2px 2px 2px 0px;">
                             <span class="skill_span">
                                 <label class="skill_label">Animal Handling</label>
-                                <label id="character_animal_handling" class="skill_input">{% if character is defined %}{{ character.animal_handling }}{% endif %}</label>
+                                <label id="character_animal_handling" class="skill_input">{% if character is defined %}{% if character.animal_handling >= 0 %}+{% endif %}{{ character.animal_handling }}{% endif %}</label>
                             </span>
                             <span class="skill_span">
                                 <label class="skill_label">Insight</label>
-                                <label id="character_insight" class="skill_input">{% if character is defined %}{{ character.insight }}{% endif %}</label>
+                                <label id="character_insight" class="skill_input">{% if character is defined %}{% if character.insight >= 0 %}+{% endif %}{{ character.insight }}{% endif %}</label>
                             </span>
                             <span class="skill_span">
                                 <label class="skill_label">Medicine</label>
-                                <label id="character_medicine" class="skill_input">{% if character is defined %}{{ character.medicine }}{% endif %}</label>
+                                <label id="character_medicine" class="skill_input">{% if character is defined %}{% if character.medicine >= 0 %}+{% endif %}{{ character.medicine }}{% endif %}</label>
                             </span>
                             <span class="skill_span">
                                 <label class="skill_label">Perception</label>
-                                <label id="character_perception" class="skill_input">{% if character is defined %}{{ character.perception }}{% endif %}</label>
+                                <label id="character_perception" class="skill_input">{% if character is defined %}{% if character.perception >= 0 %}+{% endif %}{{ character.perception }}{% endif %}</label>
                             </span>
                             <span class="skill_span">
                                 <label class="skill_label">Survival</label>
-                                <label id="character_survival" class="skill_input">{% if character is defined %}{{ character.survival }}{% endif %}</label>
+                                <label id="character_survival" class="skill_input">{% if character is defined %}{% if character.survival >= 0 %}+{% endif %}{{ character.survival }}{% endif %}</label>
                             </span>
                         </div>
+                    </li>
+                    <li style="min-height: 20px;">
+                        <span class="attribute_column_span">
+                            <label class="attribute_column_label"></label>
+                            <label class="attribute_column_label"></label>
+                            <label class="attribute_column_label">MOD</label>
+                            <label class="attribute_column_label">SAVE</label>
+                        </span>
+                        <span class="attribute_column_span">
+                            <label class="attribute_column_label"></label>
+                            <label class="attribute_column_label"></label>
+                            <label class="attribute_column_label">MOD</label>
+                            <label class="attribute_column_label">SAVE</label>
+                        </span>
                     </li>
                     <li>
                         <span class="attribute_span">
@@ -175,24 +205,28 @@
                         </span>
                     </li>
                     <li>
-                        <div style="width: 190px;">
+                        <div style="width: 190px; margin: 2px 2px 2px 0px;">
+                            <span class="skill_span">
+                                <label class="skill_label"></label>
+                                <label class="skill_input"></label>
+                            </span>
                         </div>
-                        <div style="width: 190px;">
+                        <div style="width: 190px; margin: 2px 2px 2px 0px;">
                             <span class="skill_span">
                                 <label class="skill_label">Deception</label>
-                                <label id="character_deception" class="skill_input">{% if character is defined %}{{ character.deception }}{% endif %}</label>
+                                <label id="character_deception" class="skill_input">{% if character is defined %}{% if character.deception >= 0 %}+{% endif %}{{ character.deception }}{% endif %}</label>
                             </span>
                             <span class="skill_span">
                                 <label class="skill_label">Intimidation</label>
-                                <label id="character_intimidation" class="skill_input">{% if character is defined %}{{ character.intimidation }}{% endif %}</label>
+                                <label id="character_intimidation" class="skill_input">{% if character is defined %}{% if character.intimidation >= 0 %}+{% endif %}{{ character.intimidation }}{% endif %}</label>
                             </span>
                             <span class="skill_span">
                                 <label class="skill_label">Performance</label>
-                                <label id="character_performance" class="skill_input">{% if character is defined %}{{ character.performance }}{% endif %}</label>
+                                <label id="character_performance" class="skill_input">{% if character is defined %}{% if character.performance >= 0 %}+{% endif %}{{ character.performance }}{% endif %}</label>
                             </span>
                             <span class="skill_span">
                                 <label class="skill_label">Persuasion</label>
-                                <label id="character_persuasion" class="skill_input">{% if character is defined %}{{ character.persuasion }}{% endif %}</label>
+                                <label id="character_persuasion" class="skill_input">{% if character is defined %}{% if character.persuasion >= 0 %}+{% endif %}{{ character.persuasion }}{% endif %}</label>
                             </span>
                         </div>
                     </li>
@@ -202,37 +236,70 @@
                 <ul style="max-width: 450px;">
                     <h3>Proficiencies</h3>
                     <hr>
-                    <p>{% if character is defined %}{{ character.languages }}{% endif %}</p>
+                    <p style="white-space: pre-line;">{% if character is defined %}{{ character.languages }}{% endif %}</p>
                 </ul>
             </div>
             <div id="character_species_traits" {% if character is defined and character.species_traits == "" %}hidden{% endif %}>
                 <ul style="max-width: 450px;">
                     <h3>Species Traits</h3>
                     <hr>
-                    <p>{% if character is defined %}{{ character.species_traits }}{% endif %}</p>
+                    <p style="white-space: pre-line;">{% if character is defined %}{{ character.species_traits }}{% endif %}</p>
                 </ul>
             </div>
             <div id="character_feats" {% if character is defined and character.feats == "" %}hidden{% endif %}>
                 <ul style="max-width: 450px;">
                     <h3>Feats</h3>
                     <hr>
-                    <p>{% if character is defined %}{{ character.feats }}{% endif %}</p>
+                    <p style="white-space: pre-line;">{% if character is defined %}{{ character.feats }}{% endif %}</p>
                 </ul>
             </div>
             <div id="character_traits" {% if character is defined and character.traits == "" %}hidden{% endif %}>
                 <ul style="max-width: 450px;">
                     <h3>Class Features</h3>
                     <hr>
-                    <p>{% if character is defined %}{{ character.traits }}{% endif %}</p>
+                    <p style="white-space: pre-line;">{% if character is defined %}{{ character.traits }}{% endif %}</p>
                 </ul>
             </div>
-            {% if character is defined and character.user_id == user%}
-                <span>
-                    <form action="/character/{{ character.creature_id }}/edit" method="get">
-                        <button class="btn btn-primary" type="submit">Edit</button>
-                    </form>
-                </span>
-            {% endif %}
+            <div id="character_attacks" {% if character is defined and character.attacks|length == 0 %}hidden{% endif %}>
+                <ul style="max-width: 450px;">
+                    <h3>Attacks</h3>
+                    <hr>
+                    {% if character is defined %}
+                        {% for attack in character.attacks %}
+                            <label><strong>{{ attack.name }}</strong>. {{ attack.description}} {% if attack.bonus > 0 %}+{% endif %}{{ attack.bonus }} to hit.{% if attack.damages|length > 0 %} Hit: {% for damage in attack.damages %}{% if loop.index0 != 0 %}, plus {% endif %}{{ damage.count }}d{{ damage.size }} {% if damage.bonus != 0 %}{% if damage.bonus >= 0 %}+{% endif %} {{ damage.bonus }}{% endif %} {{ damage.type }} damage{% endfor %}.{% endif %}</label>
+                        {% endfor %}
+                    {% endif %}
+                </ul>
+            </div>
+            <div id="character_abilities" {% if character is defined and character.abilities|length == 0 %}hidden{% endif %}>
+                <ul style="max-width: 450px;">
+                    <h3>Abilities</h3>
+                    <hr>
+                    {% if character is defined %}
+                        {% for ability in character.abilities %}
+                            <label><strong>{{ ability.name }}</strong>. {{ ability.description}} DC{{ ability.dc }} {{ ability.attribute }} Save.{% if ability.damages|length > 0 %} Hit: {% for damage in ability.damages %}{% if loop.index0 != 0 %}, plus {% endif %}{{ damage.count }}d{{ damage.size }} {% if damage.bonus != 0 %}{% if damage.bonus >= 0 %}+{% endif %} {{ damage.bonus }}{% endif %} {{ damage.type }} damage{% endfor %}.{% endif %}</label>
+                        {% endfor %}
+                    {% endif %}
+                </ul>
+            </div>
+            <div id="character_resources" {% if character is defined and character.resources|length == 0 %}hidden{% endif %}>
+                <ul style="max-width: 450px;">
+                    <h3>Resources</h3>
+                    <hr>
+                    {% if character is defined %}
+                        {% for resource in character.resources %}
+                            <label><strong>{{ resource.name }}</strong>. {{ resource.description}} Charges: {{ resource.max_charges }}. Recharge: {{ resource.recharge }}.</label>
+                        {% endfor %}
+                    {% endif %}
+                </ul>
+            </div>
         </div>
+        {% if character is defined and character.user_id == user%}
+            <span>
+                <form action="/character/{{ character.creature_id }}/edit" method="get">
+                    <button class="btn btn-primary" type="submit">Edit</button>
+                </form>
+            </span>
+        {% endif %}
     </div>
 {% endblock %}

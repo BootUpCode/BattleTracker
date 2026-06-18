@@ -136,44 +136,77 @@
                 <ul style="max-width: 450px;">
                     <h3>Traits</h3>
                     <hr>
-                    <p>{% if monster is defined %}{{ monster.traits }}{% endif %}</p>
+                    <p style="white-space: pre-line;">{% if monster is defined %}{{ monster.traits }}{% endif %}</p>
                 </ul>
             </div>
             <div id="monster_actions" {% if monster is defined and monster.actions == "" %}hidden{% endif %}>
                 <ul style="max-width: 450px;">
                     <h3>Actions</h3>
                     <hr>
-                    <p>{% if monster is defined %}{{ monster.actions }}{% endif %}</p>
+                    <p style="white-space: pre-line;">{% if monster is defined %}{{ monster.actions }}{% endif %}</p>
                 </ul>
             </div>
             <div id="monster_bonus_actions" {% if monster is defined and monster.bonus_actions == "" %}hidden{% endif %}>
                 <ul style="max-width: 450px;">
                     <h3>Bonus Actions</h3>
                     <hr>
-                    <p>{% if monster is defined %}{{ monster.bonus_actions }}{% endif %}</p>
+                    <p style="white-space: pre-line;">{% if monster is defined %}{{ monster.bonus_actions }}{% endif %}</p>
                 </ul>
             </div>
             <div id="monster_reactions" {% if monster is defined and monster.reactions == "" %}hidden{% endif %}>
                 <ul style="max-width: 450px;">
                     <h3>Reactions</h3>
                     <hr>
-                    <p>{% if monster is defined %}{{ monster.reactions }}{% endif %}</p>
+                    <p style="white-space: pre-line;">{% if monster is defined %}{{ monster.reactions }}{% endif %}</p>
                 </ul>
             </div>
             <div id="monster_legendary_actions" {% if monster is defined and monster.legendary_actions == "" %}hidden{% endif %}>
                 <ul style="max-width: 450px;">
                     <h3>Legendary Actions</h3>
                     <hr>
-                    <p>{% if monster is defined %}{{ monster.legendary_actions }}{% endif %}</p>
+                    <p style="white-space: pre-line;">{% if monster is defined %}{{ monster.legendary_actions }}{% endif %}</p>
                 </ul>
             </div>
-            {% if monster is defined and monster.user_id == user%}
-                <span>
-                    <form action="/monster/{{ monster.creature_id }}/edit" method="get">
-                        <button class="btn btn-primary" type="submit">Edit</button>
-                    </form>
-                </span>
-            {% endif %}
+            <div id="monster_attacks" {% if monster is defined and monster.attacks|length == 0 %}hidden{% endif %}>
+                <ul style="max-width: 450px;">
+                    <h3>Attacks</h3>
+                    <hr>
+                    {% if monster is defined %}
+                        {% for attack in monster.attacks %}
+                            <label><strong>{{ attack.name }}</strong>. {{ attack.description}} {% if attack.bonus > 0 %}+{% endif %}{{ attack.bonus }} to hit.{% if attack.damages|length > 0 %} Hit: {% for damage in attack.damages %}{% if loop.index0 != 0 %}, plus {% endif %}{{ damage.count }}d{{ damage.size }} {% if damage.bonus != 0 %}{% if damage.bonus >= 0 %}+{% endif %} {{ damage.bonus }}{% endif %} {{ damage.type }} damage{% endfor %}.{% endif %}</label>
+                        {% endfor %}
+                    {% endif %}
+                </ul>
+            </div>
+            <div id="monster_abilities" {% if monster is defined and monster.abilities|length == 0 %}hidden{% endif %}>
+                <ul style="max-width: 450px;">
+                    <h3>Abilities</h3>
+                    <hr>
+                    {% if monster is defined %}
+                        {% for ability in monster.abilities %}
+                            <label><strong>{{ ability.name }}</strong>. {{ ability.description}} DC{{ ability.dc }} {{ ability.attribute }} Save.{% if ability.damages|length > 0 %} Hit: {% for damage in ability.damages %}{% if loop.index0 != 0 %}, plus {% endif %}{{ damage.count }}d{{ damage.size }} {% if damage.bonus != 0 %}{% if damage.bonus >= 0 %}+{% endif %} {{ damage.bonus }}{% endif %} {{ damage.type }} damage{% endfor %}.{% endif %}</label>
+                        {% endfor %}
+                    {% endif %}
+                </ul>
+            </div>
+            <div id="monster_resources" {% if monster is defined and monster.resources|length == 0 %}hidden{% endif %}>
+                <ul style="max-width: 450px;">
+                    <h3>Resources</h3>
+                    <hr>
+                    {% if monster is defined %}
+                        {% for resource in monster.resources %}
+                            <label><strong>{{ resource.name }}</strong>. {{ resource.description}} Charges: {{ resource.max_charges }}. Recharge: {{ resource.recharge }}.</label>
+                        {% endfor %}
+                    {% endif %}
+                </ul>
+            </div>
         </div>
+        {% if monster is defined and monster.user_id == user%}
+            <span>
+                <form action="/monster/{{ monster.creature_id }}/edit" method="get">
+                    <button class="btn btn-primary" type="submit">Edit</button>
+                </form>
+            </span>
+        {% endif %}
     </div>
 {% endblock %}

@@ -117,6 +117,58 @@ def view_character(creature_id):
         return error("not found", 404)
     character = rows[0]
 
+    # Query database for attacks
+    with sqlite3.connect(database) as conn:
+        conn.row_factory = sqlite3.Row
+        cur = conn.cursor()
+        cur.execute(
+            "SELECT * FROM attacks WHERE creature_id = ?",
+            (creature_id,)
+        )
+        character["attacks"] = [dict(row) for row in cur.fetchall()]
+
+    # Query database for attack damages
+    for attack in character["attacks"]:
+        with sqlite3.connect(database) as conn:
+            conn.row_factory = sqlite3.Row
+            cur = conn.cursor()
+            cur.execute(
+                "SELECT * FROM damages WHERE trigger_id = ?",
+                ("a:" + str(attack["id"]),)
+            )
+            attack["damages"] = [dict(row) for row in cur.fetchall()]
+
+    # Query database for abilities
+    with sqlite3.connect(database) as conn:
+        conn.row_factory = sqlite3.Row
+        cur = conn.cursor()
+        cur.execute(
+            "SELECT * FROM abilities WHERE creature_id = ?",
+            (creature_id,)
+        )
+        character["abilities"] = [dict(row) for row in cur.fetchall()]
+
+    # Query database for ability damages
+    for ability in character["abilities"]:
+        with sqlite3.connect(database) as conn:
+            conn.row_factory = sqlite3.Row
+            cur = conn.cursor()
+            cur.execute(
+                "SELECT * FROM damages WHERE trigger_id = ?",
+                ("s:" + str(ability["id"]),)
+            )
+            ability["damages"] = [dict(row) for row in cur.fetchall()]
+    
+    # Query database for resources
+    with sqlite3.connect(database) as conn:
+        conn.row_factory = sqlite3.Row
+        cur = conn.cursor()
+        cur.execute(
+            "SELECT * FROM resources WHERE creature_id = ?",
+            (creature_id,)
+        )
+        character["resources"] = [dict(row) for row in cur.fetchall()]
+
     return render_template("character.html", user=session["user_id"], character=character)
     
 
@@ -128,20 +180,32 @@ def edit_character(creature_id):
     # User reached route via POST (as by submitting a form via POST)
     if request.method == "POST":
 
+        # List of fields to request
         creature = {"user_id" : session["user_id"], "is_player" : 1}
-        creature_traits = ["name", "size", "alignment", "armor_class", "max_hitpoints", "initiative_bonus", "speed",
-                           "strength", "dexterity", "constitution", "intelligence", "wisdom", "charisma",
-                           "strength_save_bonus", "dexterity_save_bonus", "constitution_save_bonus", "intelligence_save_bonus", "wisdom_save_bonus", "charisma_save_bonus",
-                           "skills", "senses", "languages", "traits"]
+        creature_traits = ["name", "size", "alignment", "speed", "skills", "senses", "languages", "traits"]
+        creature_traits_number = ["armor_class", "max_hitpoints", "initiative_bonus", "strength", "dexterity", "constitution", "intelligence", "wisdom", "charisma",
+                                  "strength_save_bonus", "dexterity_save_bonus", "constitution_save_bonus", "intelligence_save_bonus", "wisdom_save_bonus", "charisma_save_bonus"]
         character = {}
-        character_traits = ["background", "species", "class", "prof_bonus", "species_traits", "feats",
-                            "acrobatics", "animal_handling", "arcana", "athletics", "deception", "history", "insight", "intimidation", 
-                            "investigation", "medicine", "nature", "perception", "performance", "persuasion", "religion", "sleight_of_hand", "stealth", "survival"]
+        character_traits = ["background", "species", "class", "species_traits", "feats"]
+        character_traits_number = ["prof_bonus", "acrobatics", "animal_handling", "arcana", "athletics", "deception", "history", "insight", "intimidation", 
+                                   "investigation", "medicine", "nature", "perception", "performance", "persuasion", "religion", "sleight_of_hand", "stealth", "survival"]
 
+        # Parse form information
         for creature_trait in creature_traits:
             creature[creature_trait] = request.form.get(creature_trait)
+        for creature_trait_number in creature_traits_number:
+            try:
+                creature[creature_trait_number] = int(request.form.get(creature_trait_number))
+            except:
+                creature[creature_trait_number] = 0
+
         for character_trait in character_traits:
             character[character_trait] = request.form.get(character_trait)
+        for character_trait_number in character_traits_number:
+            try:
+                character[character_trait_number] = int(request.form.get(character_trait_number))
+            except:
+                character[character_trait_number] = 0
 
         creature["skills"] = ""
 
@@ -288,7 +352,7 @@ def monster_list():
 
 @app.route("/monster/<creature_id>")
 @login_required
-def view_monsters(creature_id):
+def view_monster(creature_id):
     """Show monster details"""
 
     # Query database for monster
@@ -306,6 +370,58 @@ def view_monsters(creature_id):
         return error("not found", 404)
     monster = rows[0]
 
+    # Query database for attacks
+    with sqlite3.connect(database) as conn:
+        conn.row_factory = sqlite3.Row
+        cur = conn.cursor()
+        cur.execute(
+            "SELECT * FROM attacks WHERE creature_id = ?",
+            (creature_id,)
+        )
+        monster["attacks"] = [dict(row) for row in cur.fetchall()]
+
+    # Query database for attack damages
+    for attack in monster["attacks"]:
+        with sqlite3.connect(database) as conn:
+            conn.row_factory = sqlite3.Row
+            cur = conn.cursor()
+            cur.execute(
+                "SELECT * FROM damages WHERE trigger_id = ?",
+                ("a:" + str(attack["id"]),)
+            )
+            attack["damages"] = [dict(row) for row in cur.fetchall()]
+
+    # Query database for abilities
+    with sqlite3.connect(database) as conn:
+        conn.row_factory = sqlite3.Row
+        cur = conn.cursor()
+        cur.execute(
+            "SELECT * FROM abilities WHERE creature_id = ?",
+            (creature_id,)
+        )
+        monster["abilities"] = [dict(row) for row in cur.fetchall()]
+
+    # Query database for ability damages
+    for ability in monster["abilities"]:
+        with sqlite3.connect(database) as conn:
+            conn.row_factory = sqlite3.Row
+            cur = conn.cursor()
+            cur.execute(
+                "SELECT * FROM damages WHERE trigger_id = ?",
+                ("s:" + str(ability["id"]),)
+            )
+            ability["damages"] = [dict(row) for row in cur.fetchall()]
+    
+    # Query database for resources
+    with sqlite3.connect(database) as conn:
+        conn.row_factory = sqlite3.Row
+        cur = conn.cursor()
+        cur.execute(
+            "SELECT * FROM resources WHERE creature_id = ?",
+            (creature_id,)
+        )
+        monster["resources"] = [dict(row) for row in cur.fetchall()]
+
     return render_template("monster.html", monster=monster, user=session["user_id"])
 
 
@@ -316,18 +432,25 @@ def edit_monster(creature_id):
 
     # User reached route via POST (as by submitting a form via POST)
     if request.method == "POST":
-
+                
+        # List of fields to request
         creature = {"user_id" : session["user_id"], "is_player" : 0}
-        creature_traits = ["name", "size", "alignment", "armor_class", "max_hitpoints", "initiative_bonus", "speed",
-                           "strength", "dexterity", "constitution", "intelligence", "wisdom", "charisma",
-                           "strength_save_bonus", "dexterity_save_bonus", "constitution_save_bonus", "intelligence_save_bonus", "wisdom_save_bonus", "charisma_save_bonus",
-                           "skills", "senses", "languages", "traits"]
+        creature_traits = ["name", "size", "alignment", "speed", "skills", "senses", "languages", "traits"]
+        creature_traits_number = ["armor_class", "max_hitpoints", "initiative_bonus", "strength", "dexterity", "constitution", "intelligence", "wisdom", "charisma",
+                                  "strength_save_bonus", "dexterity_save_bonus", "constitution_save_bonus", "intelligence_save_bonus", "wisdom_save_bonus", "charisma_save_bonus"]
         monster = {}
         monster_traits = ["type", "challenge_rating", "vulnerabilities", "resistances", "immunities",
                           "actions", "bonus_actions", "reactions", "legendary_actions"]
         
+        # Parse form information
         for creature_trait in creature_traits:
             creature[creature_trait] = request.form.get(creature_trait)
+        for creature_trait_number in creature_traits_number:
+            try:
+                creature[creature_trait_number] = int(request.form.get(creature_trait_number))
+            except:
+                creature[creature_trait_number] = 0
+
         for monster_trait in monster_traits:
             monster[monster_trait] = request.form.get(monster_trait)
 
@@ -1258,8 +1381,19 @@ def handle_hp_update(encounter_id, combatant_id, current_hitpoints):
         )
         conn.commit()
 
+    # Query database for combatants
+    with sqlite3.connect(database) as conn:
+        conn.row_factory = sqlite3.Row
+        cur = conn.cursor()
+        cur.execute(
+            "SELECT combatants.id, user_id, current_hitpoints, max_hitpoints FROM combatants JOIN creatures ON creatures.id = combatants.creature_id WHERE combatants.id = ?",
+            (combatant_id,)
+        )
+        combatants = [dict(row) for row in cur.fetchall()]
+
     # Send update to campaign room
-    emit("hp_updated", {"combatant_id": str(combatant_id), "current_hitpoints": str(current_hitpoints)}, to=str(encounter_id))
+    if (combatants[0]):
+        emit("hp_updated", {"combatant": combatants[0]}, to=str(encounter_id))
 
 
 # Handle user creature details request
@@ -1305,7 +1439,7 @@ def handle_combatant_sort(encounter_id, namespace="/"):
         conn.row_factory = sqlite3.Row
         cur = conn.cursor()
         cur.execute(
-            "SELECT combatants.id, name, user_id, combatants.creature_id, initiative_bonus, initiative, max_hitpoints, current_hitpoints FROM combatants JOIN creatures ON creatures.id = combatants.creature_id LEFT JOIN characters ON characters.creature_id = combatants.creature_id LEFT JOIN monsters ON monsters.creature_id = combatants.creature_id WHERE encounter_id = ?",
+            "SELECT combatants.id, name, user_id, combatants.creature_id, initiative_bonus, initiative, max_hitpoints, current_hitpoints, is_player FROM combatants JOIN creatures ON creatures.id = combatants.creature_id LEFT JOIN characters ON characters.creature_id = combatants.creature_id LEFT JOIN monsters ON monsters.creature_id = combatants.creature_id WHERE encounter_id = ?",
             (encounter_id,)
         )
         combatants = [dict(row) for row in cur.fetchall()]

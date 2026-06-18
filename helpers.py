@@ -43,6 +43,7 @@ def login_required(f):
 
     return decorated_function
 
+
 def handle_creature_features(database, creature_id):
     """Handle data from optional features on creature edit page"""
 
@@ -68,9 +69,12 @@ def handle_creature_features(database, creature_id):
         if nametag != "":
             attack = {"nametag" : nametag,
                         "name" : request.form.get(nametag + "_name"),
-                        "bonus" : request.form.get(nametag + "_bonus"),
                         "description" : request.form.get(nametag + "_description"),
                         "retrieved" : False,}
+            try:
+                attack["bonus"] = int(request.form.get(nametag + "_bonus"))
+            except:
+                attack["bonus"] = 0
             # Check if all attack form data was succesfully retrieved
             if not None in attack.values():
                 attack["retrieved"] = True
@@ -131,10 +135,13 @@ def handle_creature_features(database, creature_id):
         if nametag != "":
             ability = {"nametag" : nametag,
                         "name" : request.form.get(nametag + "_name"),
-                        "dc" : request.form.get(nametag + "_dc"),
                         "attribute" : request.form.get(nametag + "_attribute"),
                         "description" : request.form.get(nametag + "_description"),
                         "retrieved" : False}
+            try:
+                ability["dc"] = int(request.form.get(nametag + "_dc"))
+            except:
+                ability["dc"] = 0
             # Check if all ability form data was succesfully retrieved
             if not None in ability.values():
                 ability["retrieved"] = True
@@ -194,11 +201,13 @@ def handle_creature_features(database, creature_id):
         if nametag != "":
             damage = {"nametag" : nametag[nametag.find("d"):],
                         "trigger_nametag" : nametag[:nametag.find(".")],
-                        "count" : request.form.get(nametag + "_count"),
-                        "size": request.form.get(nametag + "_size"),
-                        "bonus" : request.form.get(nametag + "_bonus"),
                         "type" : request.form.get(nametag + "_type"),
                         "retrieved" : False}
+            for damageAttribute in ["count", "size", "bonus"]:
+                try:
+                    damage[damageAttribute] = int(request.form.get(nametag + "_" + damageAttribute))
+                except:
+                    damage[damageAttribute] = 0
             # Find database id of triggering attack or ability if it is newly added to database
             if damage["trigger_nametag"][2:5] == "new":
                 damage["trigger_nametag"] = newTriggerLookup[damage["trigger_nametag"]]
@@ -237,62 +246,65 @@ def handle_creature_features(database, creature_id):
                 conn.commit()
 
     # -- Resource Data ---
-    # Query database for resources
+    # Lookup form data for nametags of new resources
+    resourceNametags = ""
+    if request.form.get("new_resource_name_tags"):
+        resourceNametags = request.form.get("new_resource_name_tags")
+
+    # Query database for nametags of existing resources
     with sqlite3.connect(database) as conn:
-        conn.row_factory = sqlite3.Row
         cur = conn.cursor()
         cur.execute(
-            "SELECT * FROM resources WHERE creature_id = ?",
+            "SELECT id FROM resources WHERE creature_id = ?",
             (creature_id,)
         )
-        existing_resources = [dict(row) for row in cur.fetchall()]
-
-    # Create list containing dictionaries for newly added and pre-existing resources
-    resources = []
-    # Add form nametags for new resources
-    if request.form.get("new_resource_name_tags"):
-        for i in request.form.get("new_resource_name_tags").split(","):
-            resources.append({"nametag" : "new_" + str(i), "new" : True})
-    # Add form nametags and database id for pre-existing resources
-    for existing_resource in existing_resources:
-        resources.append({"nametag": str(existing_resource["id"]), "new" : False, "id" : str(existing_resource["id"])})
+        for result in cur.fetchall():
+            resourceNametags += ",r:" + str(result[0])
 
     # Add form data for resources to dictionaries using form nametags
-    for resource in resources:
-        resource["name"] = request.form.get("resource_name_" + resource["nametag"])
-        resource["max_charges"] = request.form.get("resource_max_charges_" + resource["nametag"])
-        resource["recharge"] = request.form.get("resource_recharge_" + resource["nametag"])
-        resource["retrieved"] = False
-        # Check if all form data was succesfully retrieved
-        if not None in resource.values():
-            resource["retrieved"] = True
+    resources = []
+    for nametag in resourceNametags.split(","):
+        if nametag != "":
+            resource = {"nametag" : nametag,
+                        "name" : request.form.get(nametag + "_name"),
+                        "description" : request.form.get(nametag + "_description"),
+                        "recharge" : request.form.get(nametag + "_recharge"),
+                        "retrieved" : False}
+            try:
+                resource["max_charges"] = int(request.form.get(nametag + "_max_charges"))
+            except:
+                resource["max_charges"] = 0
+            # Check if all resource form data was succesfully retrieved
+            if not None in resource.values():
+                resource["retrieved"] = True
+            resources.append(resource)
 
     for resource in resources:
         # Update if resource was pre-existing and still present on the form
-        if not resource["new"] and resource["retrieved"]:
+        if not resource["nametag"][2:5] == "new" and resource["retrieved"]:
             with sqlite3.connect(database) as conn:
                 cur = conn.cursor()
                 cur.execute(
-                    "UPDATE resources SET name = ?, max_charges = ?, recharge = ? WHERE id = ? AND creature_id = ?",
-                    (resource["name"], resource["max_charges"], resource["recharge"], resource["id"], creature_id)
+                    "UPDATE resources SET name = ?, max_charges = ?, description = ?, recharge = ? WHERE id = ? AND creature_id = ?",
+                    (resource["name"], resource["max_charges"], resource["description"], resource["recharge"], resource["nametag"][2:], creature_id)
                 )
                 conn.commit()
         # Delete if resource was pre-existing and no longer present on the form
-        elif not resource["new"] and not resource["retrieved"]:
+        elif not resource["nametag"][2:5] == "new" and not resource["retrieved"]:
             with sqlite3.connect(database) as conn:
                 cur = conn.cursor()
                 cur.execute(
                     "DELETE FROM resources WHERE id = ? AND creature_id = ?",
-                    (resource["id"], creature_id)
+                    (resource["nametag"][2:], creature_id)
                 )
                 conn.commit()
         # Insert if resource is new and present on the form
-        elif resource["new"] and resource["retrieved"]:
+        elif resource["nametag"][2:5] == "new" and resource["retrieved"]:
             with sqlite3.connect(database) as conn:
                 cur = conn.cursor()
                 cur.execute(
-                    "INSERT INTO resources (name, max_charges, recharge, creature_id) VALUES (?, ?, ?, ?)",
-                    (resource["name"], resource["max_charges"], resource["recharge"], creature_id)
+                    "INSERT INTO resources (name, max_charges, description, recharge, creature_id) VALUES (?, ?, ?, ?, ?)",
+                    (resource["name"], resource["max_charges"], resource["description"], resource["recharge"], creature_id)
                 )
                 conn.commit()
 
@@ -337,6 +349,7 @@ def sql_insert(database, tablename, insert_values, return_variable = None):
     # Return variable
     if return_variable:
         return return_value
+
 
 def sql_update(database, tablename, update_values, update_location):
     """Update database row with dict"""
