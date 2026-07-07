@@ -7,20 +7,18 @@
 {% block main %}
     <h2>Encounter: {{ encounter.name }}</h2>
     <label id="encounter_status">Status: {{ encounter.status }}</label>
-    <label id="encounter_round_count">Round: {{ encounter.round_count }}</label>
-    <label id="encounter_turn_id">Turn of: {{ encounter.turn_combatant_id }}</label>
+    <label id="encounter_round_count">Round {{ encounter.round_count }}</label>
+    <label id="encounter_turn_id">Turn of {{ encounter.turn_combatant_id }}</label>
     {% if encounter.dm_id == user %}
         <button type="button" onclick="send_encounter_status('started')">Start</button>
         <button type="button" onclick="send_encounter_status('paused')">Pause</button>
         <button type="button" onclick="send_encounter_turn(-1)">Previous</button>
         <button type="button" onclick="send_encounter_turn(1)">Next</button>
-        <form action="/encounter/{{ encounter.id }}/edit" method="get">
-            <button class="btn btn-primary" type="submit">Edit</button>
-        </form>
+        <a id="encounter_edit_link" href="/encounter/{{ encounter.id }}/edit"><button type="button">Edit</button></a>
     {% endif %}
 
     <h2>Combatants</h2>
-    <div id="combatants" class="formtable" style="display: grid; grid-template-columns: 45px 300px 45px 120px 60px 60px;">
+    <div id="combatants" class="formtable" style="display: grid; grid-template-columns: 45px 200px 45px 120px; max-height: 300px; overflow-y: auto;">
         {% for combatant in combatants %}
             <div>
                 {% if combatant.user_id == user or encounter.dm_id == user %}
@@ -28,7 +26,11 @@
                 {% endif %}
                 <label id="label_init_{{ combatant.id }}" {% if combatant.user_id == user or encounter.dm_id == user %}hidden{% endif %}>{% if combatant.initiative == None %}{% else %}{{ combatant.initiative }}{% endif %}</label>
             </div>
-            <label id="name_{{ combatant.id }}" {% if encounter.turn_combatant_id == combatant.id %} style="font-weight: bold;"{% endif %}>{{ combatant.name }}</label>
+            {% if combatant.is_player or encounter.dm_id == user %}
+                <button id="name_{{ combatant.id }}" {% if encounter.turn_combatant_id == combatant.id %} style="font-weight: bold;"{% endif %} class="btn btn-primary" type="button" onclick="request_combatant_info('{{ combatant.id}}')">{{ combatant.name }}</button>
+            {% else %}
+                <label id="name_{{ combatant.id }}" {% if encounter.turn_combatant_id == combatant.id %} style="font-weight: bold;"{% endif %}>{{ combatant.name }}</label>
+            {% endif %}
             <label id="label_initiative_bonus_{{ combatant.id }}" hidden>{{ combatant.initiative_bonus }}</label>
             <label>HP: </label>
             <span id="span_hp_{{ combatant.id }}">
@@ -40,26 +42,28 @@
                     <label {% if hp_percentage > 75 %}style="color: green;"{% elif hp_percentage > 25 %}style="color: orange;"{% elif hp_percentage > 0 %}style="color: red;"{% else %}style="color: darkred;"{% endif %}>{% if hp_percentage > 75 %}healthy{% elif hp_percentage > 25 %}injured{% elif hp_percentage > 0 %}wounded{% else %}unconscious{% endif %}</label>
                 {% endif %}
             </span>
-            <div>
-                {% if combatant.user_id == user or encounter.dm_id == user %}
-                    <form action="/{% if combatant.is_player %}character{% else %}monster{% endif %}/{{ combatant.creature_id }}" method="get">
-                        <button class="btn btn-primary" type="submit">View</button>
-                    </form>
-                {% endif %}
-            </div>
-            <div>
-                {% if encounter.dm_id == user %}
-                    <button class="btn btn-primary" type="button" onclick="request_creature_info('{{ combatant.creature_id }}', '{{ combatant.is_player }}')">Details</button>
-                {% endif %}
-            </div>
         {% endfor %}
     </div>
 
-    <div id="monster_statblock_container" hidden>
-        {% include "monster_statblock.html" %}
+    <div id="selected_combatant_container" hidden style="max-height: 300px; overflow: auto;">
+        <label id="selected_combatant_name_label"></label>
+
+        <div id="selected_combatant_actions_container">
+            <!-- Action rolls, Save rolls -->
+        </div>
+        
+        <div id="monster_statblock_container">
+            {% include "monster_statblock.html" %}
+        </div>
+        <div id="character_statblock_container">
+            {% include "character_statblock.html" %}
+        </div>
     </div>
-    <div id="character_statblock_container" hidden>
-        {% include "character_statblock.html" %}
+
+                    
+    <div id="roll_log_container" style="width: 410px; max-height: 96px; overflow: auto; overflow-x: hidden;">
+        <ul id="roll_log" style="list-style-type: none; width: 400px; padding: 0px 10px 0px 10px; margin: 0px;">
+        </ul>
     </div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
@@ -68,6 +72,7 @@
         var encounter_dm_id = "{{ encounter.dm_id }}";
         var encounter_status = "{{ encounter.status }}"
         var encounter_turn_combatant_id = "{{ encounter.turn_combatant_id }}"
+        var selected_combatant;
         var user_id = "{{ user }}";
         var socket = io();
 
@@ -94,9 +99,17 @@
                     if (is_user) { combatant_string += `<input id="input_init_` + combatant.id + `" onchange="send_init('` + combatant.id + `', this.value)" type="text" value="` + combatant.initiative + `">`; }
                     combatant_string += `<label id="label_init_` + combatant.id + `"`
                     if (is_user) { combatant_string += `hidden`; }
-                    combatant_string += `>` + combatant.initiative + `</label></div><label id="name_` + combatant.id + `"`;
-                    if (encounter_turn_combatant_id == combatant.id) { combatant_string += `style="font-weight: bold;"`; }
-                    combatant_string += `>` + combatant.name + `</label><label id="label_initiative_bonus_` + combatant.id + `" hidden>` + combatant.initiative_bonus + `</label><label>HP: </label><span>`;
+                    combatant_string += `>` + combatant.initiative + `</label></div>`
+                    if (is_user) { 
+                        combatant_string += '<button id="name_' + combatant.id + '" ';
+                        if (encounter_turn_combatant_id == combatant.id) { combatant_string += `style="font-weight: bold;"`; }
+                        combatant_string += 'class="btn btn-primary" type="button" onclick="request_combatant_info(' + combatant.id + ')">' + combatant.name + '</button>';
+                    } else {
+                        combatant_string += '<label id="name_' + combatant.id + '" ';
+                        if (encounter_turn_combatant_id == combatant.id) { combatant_string += `style="font-weight: bold;"`; }
+                        combatant_string += '>' + combatant.name + '</label>';
+                    }
+                    combatant_string += `<label id="label_initiative_bonus_` + combatant.id + `" hidden>` + combatant.initiative_bonus + `</label><label>HP: </label><span>`;
                     if (is_user) { combatant_string += `<input id="input_hp_` + combatant.id + `" onchange="send_hp('` + combatant.id + `', this.value)" type="text" value="` + combatant.current_hitpoints + `">
                         <label>/ ` + combatant.max_hitpoints + `</label>`; }
                     else { var hp_percentage = (combatant.current_hitpoints / combatant.max_hitpoints) * 100;
@@ -106,13 +119,7 @@
                         else { var style_string = `style="color: darkred;"`; var display_string = `unconscious`; }
                         combatant_string += `<label ` + style_string + `>` + display_string + `</label>`;
                     }
-                    combatant_string += `</span><div>`;
-                    if (is_user) { var creature_type = (combatant.is_player) ? "character" : "monster";
-                        combatant_string += `<form action="/` + creature_type + `/` + combatant.creature_id + `" method="get">
-                        <button class="btn btn-primary" type="submit">View</button></form>` }
-                    combatant_string += `</div><div>`;
-                    if (encounter_dm_id == user_id) { combatant_string += `<button class="btn btn-primary" type="button" onclick="request_creature_info('` + combatant.creature_id + `', '` + combatant.is_player + `')">Details</button>`; }
-                    combatant_string += `</div>`;
+                    combatant_string += `</span>`;
                     table_string += combatant_string;
                 });
                 combatant_table.innerHTML = table_string;
@@ -161,84 +168,214 @@
             encounter_turn_combatant_id = turn_id;
         })
 
-        // Listen for creature data from server
-        socket.on("creature_details_updated", function({creature_id, creature}) {
-            if (document.getElementById((creature.is_player == true ? "character" : "monster") + "_creature_id").innerHTML == creature.creature_id.toString()) {
-                document.getElementById((creature.is_player == true ? "character" : "monster") + "_statblock_container").hidden = !document.getElementById((creature.is_player == true ? "character" : "monster") + "_statblock_container").hidden;
-                document.getElementById((creature.is_player == true ? "monster" : "character") + "_statblock_container").hidden = true;
+        // Listen for combatant data from server
+        socket.on("combatant_details_updated", function({combatant}) {
+            if (selected_combatant != null && selected_combatant.creature_id == combatant.creature_id) {
+                document.getElementById("selected_combatant_container").hidden = !document.getElementById("selected_combatant_container").hidden;
             }
             else {
-                document.getElementById((creature.is_player == true ? "character" : "monster") + "_creature_id").innerHTML = creature.creature_id;
-                document.getElementById("monster_statblock_container").hidden = creature.is_player;
-                document.getElementById("character_statblock_container").hidden = !creature.is_player;
+                document.getElementById("selected_combatant_container").hidden = false;
+                document.getElementById("monster_statblock_container").hidden = true;
+                document.getElementById("character_statblock_container").hidden = true;
+                selected_combatant = combatant;
+                document.getElementById((combatant.is_player == true ? "character" : "monster") + "_creature_id").innerHTML = combatant.creature_id;
 
-                creature_property_names = ["name", "armor_class", "max_hitpoints", "speed"];
-                creature_property_headers = ["", "AC ", "HP ", "Speed "];
-                creature_number_names = ["initiative_bonus"];
-                creature_number_headers = ["Initiative "];
-                creature_attributes = ["strength", "dexterity", "constitution", "intelligence", "wisdom", "charisma"];
+                combatant_property_names = ["armor_class", "max_hitpoints", "speed"];
+                combatant_property_headers = ["", "AC ", "HP ", "Speed "];
+                combatant_number_names = ["initiative_bonus"];
+                combatant_number_headers = ["Initiative "];
+                combatant_attributes = ["strength", "dexterity", "constitution", "intelligence", "wisdom", "charisma"];
 
-                if (creature.is_player) {
-                    var creature_type = "character";
-                    document.getElementById(creature_type + "_type").innerHTML = "<em>" + creature.species + " " + creature.class + ", " + creature.alignment + "</em>";
-                    creature_property_names.push("background", "size", "prof_bonus", "senses");
-                    creature_property_headers.push("Background ", "Size ", "Proficiency ", "P. Perception ");
-                    creature_number_names.push("prof_bonus");
-                    creature_number_headers.push("Proficiency ");
-                    var creature_skill_names = ["acrobatics", "animal_handling", "arcana", "athletics", "deception", "history", "insight", "intimidation", 
+                if (combatant.is_player) {
+                    var combatant_type = "character";
+                    document.getElementById(combatant_type + "_type").innerHTML = "<em>" + combatant.species + " " + combatant.class + ", " + combatant.alignment + "</em>";
+                    combatant_property_names.push("background", "size", "prof_bonus", "senses");
+                    combatant_property_headers.push("Background ", "Size ", "Proficiency ", "P. Perception ");
+                    combatant_number_names.push("prof_bonus");
+                    combatant_number_headers.push("Proficiency ");
+                    var combatant_skill_names = ["acrobatics", "animal_handling", "arcana", "athletics", "deception", "history", "insight", "intimidation", 
                                                 "investigation", "medicine", "nature", "perception", "performance", "persuasion", "religion", "sleight_of_hand", "stealth", "survival"]
-                    var creature_paragraph_names = ["languages", "species_traits", "feats", "traits"];
-                    var creature_paragraph_headers = ["Proficiencies", "Species Traits", "Feats", "Class Features"];
-                    for (var i = 0, len = creature_skill_names.length; i < len; i++) {
-                        document.getElementById(creature_type + "_" + creature_skill_names[i]).innerHTML = (creature[creature_skill_names[i]] >= 0 ? "+" : "") + creature[creature_skill_names[i]];
+                    var combatant_paragraph_names = ["languages", "species_traits", "feats", "traits"];
+                    var combatant_paragraph_headers = ["Proficiencies", "Species Traits", "Feats", "Class Features"];
+                    for (var i = 0, len = combatant_skill_names.length; i < len; i++) {
+                        document.getElementById(combatant_type + "_" + combatant_skill_names[i]).innerHTML = (user_id == encounter_dm_id || user_id == combatant.user_id ? `<button style='width: 35px;' onClick='roll_d20("` + combatant.name + `","` + combatant_skill_names[i] + ` check","` + combatant[combatant_skill_names[i]] + `")'>` : ``) + (combatant[combatant_skill_names[i]] >= 0 ? `+` : ``) + combatant[combatant_skill_names[i]] + (user_id == encounter_dm_id || user_id == combatant.user_id ? `</button>` : ``);
                     }
                 } else {
-                    var creature_type = "monster";
-                    document.getElementById(creature_type + "_type").innerHTML = "<em>" + creature.size + " " + creature.type + ", " + creature.alignment + "</em>";
-                    var creature_skill_names = ["skills", "vulnerabilities", "resistances", "immunities", "senses", "languages", "challenge_rating"];
-                    var creature_skill_headers = ["Skills ", "Vulnerabilities ", "Resistances ", "Immunites ", "Senses ", "Languages ", "CR "];
-                    var creature_paragraph_names = ["traits", "actions", "bonus_actions", "reactions", "legendary_actions"];
-                    var creature_paragraph_headers = ["Traits", "Actions", "Bonus Actions", "Reactions", "Legendary Actions"];
-                    for (var i = 0, len = creature_skill_names.length; i < len; i++) {
-                        document.getElementById(creature_type + "_" + creature_skill_names[i]).innerHTML = "<span><label><strong>" + creature_skill_headers[i] + "</strong>" + creature[creature_skill_names[i]] + "</label></span>";
-                        document.getElementById(creature_type + "_" + creature_skill_names[i]).hidden = (creature[creature_skill_names[i]] == "") ? true : false;
+                    var combatant_type = "monster";
+                    document.getElementById(combatant_type + "_type").innerHTML = "<em>" + combatant.size + " " + combatant.type + ", " + combatant.alignment + "</em>";
+                    var combatant_skill_names = ["skills", "vulnerabilities", "resistances", "immunities", "senses", "languages", "challenge_rating"];
+                    var combatant_skill_headers = ["Skills ", "Vulnerabilities ", "Resistances ", "Immunites ", "Senses ", "Languages ", "CR "];
+                    var combatant_paragraph_names = ["traits", "actions", "bonus_actions", "reactions", "legendary_actions"];
+                    var combatant_paragraph_headers = ["Traits", "Actions", "Bonus Actions", "Reactions", "Legendary Actions"];
+                    for (var i = 0, len = combatant_skill_names.length; i < len; i++) {
+                        document.getElementById(combatant_type + "_" + combatant_skill_names[i]).innerHTML = "<span><label><strong>" + combatant_skill_headers[i] + "</strong>" + combatant[combatant_skill_names[i]] + "</label></span>";
+                        document.getElementById(combatant_type + "_" + combatant_skill_names[i]).hidden = (combatant[combatant_skill_names[i]] == "") ? true : false;
                     }
                 }
-                
-                for (var i = 0, len = creature_property_names.length; i < len; i++) {
-                    document.getElementById(creature_type + "_" + creature_property_names[i]).innerHTML = "<strong>" + creature_property_headers[i] + "</strong>" + creature[creature_property_names[i]];
+
+                document.getElementById(combatant_type + "_name").innerHTML = `<h2 id="` + combatant_type + `_name" class="name_label">` + combatant.name + `</h2>
+                    <span style='display: flex; align-items: left;'><button class="btn btn-primary" type="button" onclick="show_combatant_statblock('general_info')">Info</button>
+                    <button class="btn btn-primary" type="button" onclick="show_combatant_statblock('attributes')">Attributes</button>
+                    <button class="btn btn-primary" type="button" onclick="show_combatant_statblock('details')">Features</button>
+                    <button class="btn btn-primary" type="button" onclick="show_combatant_statblock('action_list')">Actions</button>
+                    <a id="button_statblock_link" href=` + "/" + (combatant.is_player ? "character" : "monster") + "/" + combatant.creature_id + `><button class="btn btn-primary">Statblock</button></a></span>`;
+
+                for (var i = 0, len = combatant_property_names.length; i < len; i++) {
+                    document.getElementById(combatant_type + "_" + combatant_property_names[i]).innerHTML = "<strong>" + combatant_property_headers[i] + "</strong>" + combatant[combatant_property_names[i]];
                 }
-                for (var i = 0, len = creature_number_names.length; i < len; i++) {
-                    document.getElementById(creature_type + "_" + creature_number_names[i]).innerHTML = "<strong>" + creature_number_headers[i] + "</strong>" + (creature[creature_number_names[i]] >= 0 ? "+" : "") + creature[creature_number_names[i]];
+                for (var i = 0, len = combatant_number_names.length; i < len; i++) {
+                    document.getElementById(combatant_type + "_" + combatant_number_names[i]).innerHTML = "<strong>" + combatant_number_headers[i] + "</strong>" + (combatant[combatant_number_names[i]] >= 0 ? "+" : "") + combatant[combatant_number_names[i]];
                 }
-                for (var i = 0, len = creature_attributes.length; i < len; i++) {
-                    document.getElementById(creature_type + "_" + creature_attributes[i]).innerHTML = creature[creature_attributes[i]];
-                    document.getElementById(creature_type + "_" + creature_attributes[i] + "_mod").innerHTML = get_attribute_mod(creature[creature_attributes[i]]);
-                    var save_string = "";
-                    if (parseInt(creature[(creature_attributes[i] + "_save_bonus")]) >= 0) { save_string += "+";}
-                    save_string += creature[(creature_attributes[i] + "_save_bonus")];
-                    document.getElementById(creature_type + "_" + creature_attributes[i] + "_save_bonus").innerHTML = save_string;
+                for (var i = 0, len = combatant_attributes.length; i < len; i++) {
+                    document.getElementById(combatant_type + "_" + combatant_attributes[i]).innerHTML = combatant[combatant_attributes[i]];
+                    document.getElementById(combatant_type + "_" + combatant_attributes[i] + "_mod").innerHTML = (user_id == encounter_dm_id || user_id == combatant.user_id ? `<button style='width: 35px;' onClick='roll_d20("` + combatant.name + `","` + combatant_attributes[i] + ` check","` + get_attribute_mod(combatant[combatant_attributes[i]]) + `")'>` : ``) + get_attribute_mod(combatant[combatant_attributes[i]]) + (user_id == encounter_dm_id || user_id == combatant.user_id ? "</button>" : "");
+                    var save_string = (user_id == encounter_dm_id || user_id == combatant.user_id ? `<button style='width: 35px;' onClick='roll_d20("` + combatant.name + `","` + combatant_attributes[i] + ` save","` + combatant[(combatant_attributes[i] + "_save_bonus")] + `")'>` : ``);
+                    if (parseInt(combatant[(combatant_attributes[i] + "_save_bonus")]) >= 0) { save_string += "+";}
+                    save_string += combatant[(combatant_attributes[i] + "_save_bonus")] + (user_id == encounter_dm_id || user_id == combatant.user_id ? "</button>" : "");
+                    document.getElementById(combatant_type + "_" + combatant_attributes[i] + "_save_bonus").innerHTML = save_string;
                 }
-                for (var i = 0, len = creature_paragraph_names.length; i < len; i++) {
-                    document.getElementById(creature_type + "_" + creature_paragraph_names[i]).innerHTML = "<ul style='max-width: 450px;'><h3>" + creature_paragraph_headers[i] + "</h3><hr><p style='white-space: pre-line;'>" + creature[creature_paragraph_names[i]] + "</p></ul>";
-                    document.getElementById(creature_type + "_" + creature_paragraph_names[i]).hidden = (creature[creature_paragraph_names[i]] == "") ? true : false;
+                for (var i = 0, len = combatant_paragraph_names.length; i < len; i++) {
+                    document.getElementById(combatant_type + "_" + combatant_paragraph_names[i]).innerHTML = "<ul style='max-width: 450px;'><h3>" + combatant_paragraph_headers[i] + "</h3><hr><p style='white-space: pre-line;'>" + combatant[combatant_paragraph_names[i]] + "</p></ul>";
+                    document.getElementById(combatant_type + "_" + combatant_paragraph_names[i]).hidden = (combatant[combatant_paragraph_names[i]] == "") ? true : false;
                 }
+
+                var attack_string = "<ul style='max-width: 450px;'><h3>Attacks</h3><hr>";
+                for (var i = 0, len = combatant["attacks"].length; i < len; i++) {
+                    var damage_string = "";
+                    for (var j = 0, len = combatant["attacks"][i]["damages"].length; j < len; j++) {
+                        damage_string += (j > 0 ? ", plus " : "") + combatant["attacks"][i]["damages"][j]["count"] + "d" + combatant["attacks"][i]["damages"][j]["size"];
+                        damage_string += (combatant["attacks"][i]["damages"][j]["bonus"] != 0) ? ((combatant["attacks"][i]["damages"][j]["bonus"] > 0) ? " + " : " ") + combatant["attacks"][i]["damages"][j]["bonus"] : "";
+                        damage_string += " " + combatant["attacks"][i]["damages"][j]["type"] + " damage";
+                    }
+                    attack_string += "<label>";
+                    if (user_id == encounter_dm_id || user_id == combatant.user_id) {
+                        attack_string += `<button onClick='roll_d20("` + combatant.name + `","` + combatant["attacks"][i]["name"] + `","` + combatant["attacks"][i]["bonus"] + `","`;
+                        attack_string += damage_string;
+                        attack_string += `")'>`
+                    }
+                    attack_string += "<strong>" + combatant["attacks"][i]["name"] + "</strong>" + (user_id == encounter_dm_id || user_id == combatant.user_id ? "</button>" : "") + ". " + combatant["attacks"][i]["description"] + (combatant["attacks"][i]["bonus"] > 0 ? " +" : " ");
+                    attack_string += combatant["attacks"][i]["bonus"] + " to hit." + (combatant["attacks"][i]["damages"].length > 0 ? " Hit: " : "");
+                    attack_string += damage_string;
+                    attack_string += ".</label>"
+                }
+                attack_string += "</ul>";
+                document.getElementById(combatant_type + "_attacks").innerHTML = attack_string;
+                document.getElementById(combatant_type + "_attacks").hidden = (combatant["attacks"].length > 0) ? false : true;
+
+                var ability_string = "<ul style='max-width: 450px;'><h3>Abilities</h3><hr>";
+                for (var i = 0, len = combatant["abilities"].length; i < len; i++) {
+                    var damage_string = "";
+                    for (var j = 0, len = combatant["abilities"][i]["damages"].length; j < len; j++) {
+                        damage_string += (j > 0) ? ", plus " : "" + combatant["abilities"][i]["damages"][j]["count"] + "d" + combatant["abilities"][i]["damages"][j]["size"];
+                        damage_string += (combatant["abilities"][i]["damages"][j]["bonus"] != 0) ? ((combatant["abilities"][i]["damages"][j]["bonus"] > 0) ? " + " : " ") + combatant["abilities"][i]["damages"][j]["bonus"] : "";
+                        damage_string += " " + combatant["abilities"][i]["damages"][j]["type"] + " damage";
+                    }
+                    ability_string += "<label>";
+                    if (user_id == encounter_dm_id || user_id == combatant.user_id) {
+                        ability_string += `<button onClick='roll_d20("` + combatant.name + `","` + combatant["abilities"][i]["name"] + `","` + `DC` + combatant["abilities"][i]["dc"] + ` ` + combatant["abilities"][i]["attribute"] + ` save","`;
+                        ability_string += damage_string;
+                        ability_string += `")'>`
+                    }
+                    ability_string += "<strong>" + combatant["abilities"][i]["name"]  + "</strong>" + (user_id == encounter_dm_id || user_id == combatant.user_id ? "</button>" : "") + ". ";
+                    ability_string += " DC" + combatant["abilities"][i]["dc"] + " " + combatant["abilities"][i]["attribute"] + " save." + (combatant["abilities"][i]["damages"].length > 0 ? " Hit: " : "");
+                    ability_string += damage_string;
+                    ability_string += ".</label>"
+                }
+                ability_string += "</ul>";
+                document.getElementById(combatant_type + "_abilities").innerHTML = ability_string;
+                document.getElementById(combatant_type + "_abilities").hidden = (combatant["abilities"].length > 0) ? false : true;
+
+                var resource_string = "<ul style='max-width: 450px;'><h3>Resources</h3><hr>";
+                for (var i = 0, len = combatant["resources"].length; i < len; i++) {
+                    resource_string += "<label><strong>" +  combatant["resources"][i]["name"] + "</strong>. " + combatant["resources"][i]["description"] + " Charges: " + combatant["resources"][i]["max_charges"] + ". Recharge: " + combatant["resources"][i]["recharge"] + ".</label>";
+                }
+                resource_string += "</ul>";
+                document.getElementById(combatant_type + "_resources").innerHTML = resource_string;
+                document.getElementById(combatant_type + "_resources").hidden = (combatant["abilities"].length > 0) ? false : true;
+
+                document.getElementById(combatant_type + "_statblock_container").hidden = false;
+                show_combatant_statblock("general_info");
             }
         });
+
+        function show_combatant_statblock(statblock_part_name) {
+            if (selected_combatant != null) {
+                statblock_part_names = ["general_info", "attributes", "details", "action_list"];
+                if (selected_combatant.is_player) {
+                    var combatant_type = "character";
+                } else {
+                    var combatant_type = "monster";
+                    statblock_part_names.push("specific_info");
+                }
+                for (var i = 0, len = statblock_part_names.length; i < len; i++) {
+                    document.getElementById(combatant_type + "_" + statblock_part_names[i]).hidden = true;
+                }
+                if (statblock_part_name != "") {
+                    document.getElementById(combatant_type + "_" + statblock_part_name).hidden = false;
+                    if (!selected_combatant.is_player && statblock_part_name == "general_info") {
+                        document.getElementById(combatant_type + "_specific_info").hidden = false;
+                    }
+                }
+            }
+        }
 
         function get_attribute_mod(attribute_score) {
             if (attribute_score > 0) {
                 var attribute_mod = "";
                 if (attribute_score > 9) {
                     attribute_mod += "+";
-                } else {
-                    attribute_mod += "-";
                 }
                 attribute_mod += Math.floor((attribute_score - 10) / 2).toString();
                 return attribute_mod;
             } else {
                 return "-5";
             }
+        }
+
+        function roll_d20(combatant_name, roll_name, roll_bonus, roll_damage = null) {
+            roll_name = (String(roll_name).charAt(0).toUpperCase() + String(roll_name).slice(1)).replace(/_/g, " ");
+
+            if (Number.isInteger(parseInt(roll_bonus))) {
+                roll_name = roll_name + " (" + (parseInt(roll_bonus) >= 0 ? "+" : "") + parseInt(roll_bonus) + ")";
+                var roll1 = 1 + Math.floor(Math.random() * 20);
+                var roll1_color = "black"; if (roll1 == 20) { roll1_color = "green"; } else if (roll1 == 1) { roll1_color = "red";}
+                console.log(roll1 + ", " + roll1_color)
+                var roll1_result = roll1 + parseInt(roll_bonus);
+                var roll2 = 1 + Math.floor(Math.random() * 20);
+                var roll2_color = "black"; if (roll2 == 20) { roll2_color = "green"; } else if (roll2 == 1) { roll2_color = "red";}
+                var roll2_result = roll2 + parseInt(roll_bonus);
+                roll_bonus = "<strong style='color: " + roll1_color + "'>" + roll1_result + "</strong>, <strong style='color: " + roll2_color + "'>" + roll2_result + "</strong>";
+            }
+            var damage_string = "";
+            if (roll_damage != null) {
+                damage_string += ": ";
+                roll_damages = roll_damage.split(", plus ");
+                for (var i = 0, len = roll_damages.length; i < len; i++) {
+                    if (i > 0) {
+                        damage_string += ", ";
+                    }
+                    var damage_dice_count = parseInt(roll_damages[i].split("d")[0]);
+                    var damage_dice_size = parseInt(roll_damages[i].split(" ")[0].split("d")[1]);
+                    var damage_bonus = (roll_damages[i].split(" ")[1] == "+" || roll_damages[i].split(" ")[1] == "-") ? parseInt(roll_damages[i].split(" ")[2]) : 0;
+                    var damage_type = (roll_damages[i].split(" ")[1] == "+" || roll_damages[i].split(" ")[1] == "-") ? roll_damages[i].split(" ")[3] : roll_damages[i].split(" ")[1];
+                    var damage = 0;
+                    for (var j = 0; j < damage_dice_count; j++) {
+                        damage += 1 + Math.floor(Math.random() * damage_dice_size);
+                    }
+                    damage += damage_bonus;
+                    damage_string += damage.toString() + " " + damage_type;
+                }
+                damage_string += " damage";
+            }
+            var ul = document.getElementById("roll_log");
+            var li1 = document.createElement("li");
+            ul.appendChild(li1);
+            li1.innerHTML = `<label class="roll_label"><strong>` + document.getElementById("encounter_round_count").innerHTML.toString() + " - " + combatant_name + `: ` + roll_name + `</strong></label>`
+            var li2 = document.createElement("li");
+            ul.appendChild(li2);
+            li2.innerHTML = `<label class="roll_label">` + roll_bonus + damage_string + `</label>`;
+
+            document.getElementById("roll_log_container").scrollTop = document.getElementById("roll_log_container").scrollHeight;
         }
 
         // Send start encounter signal to server
@@ -267,10 +404,10 @@
             socket.emit("hp_update", encounter_id, combatant_id, current_hitpoints);
         }
 
-        // Send creature id to server, which will respond with creature data
-        function request_creature_info(creature_id, is_player)
+        // Send combatant id to server, which will respond with combatant data
+        function request_combatant_info(combatant_id)
         {
-            socket.emit("creature_info_request", user_id, creature_id, is_player);
+            socket.emit("combatant_info_request", user_id, combatant_id);
         }
     </script>
 {% endblock %}

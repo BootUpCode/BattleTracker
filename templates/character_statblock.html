@@ -1,12 +1,12 @@
 {% block statblock %}
     <div class="statblock_container">
         <label id="character_creature_id" hidden>{% if character is defined %}{{ character.creature_id }}{% endif %}</label>
-        <span class="name_span">
-            <label id="character_name" class="name_label">{% if character is defined %}{{ character.name }}{% endif %}</h2>
-        </span>
+        <div id="character_name" class="name_span">
+            <h2 id="character_name" class="name_label">{% if character is defined %}{{ character.name }}{% endif %}</h2>
+        </div>
         <hr style="margin: 3px 5px 3px 5px">    
         <div class="statblock">
-            <div>
+            <div id="character_general_info">
                 <ul style="max-width: 450px;">
                     <li>
                         <span>
@@ -46,11 +46,7 @@
                     </li>
                 </ul>
             </div>
-            <div>
-                <ul style="max-width: 450px;">
-                    <h3>Attributes & Skills</h3>
-                    <hr>
-                </ul>
+            <div id="character_attributes">
                 <ul style="max-width: 450px;">
                     <li style="min-height: 20px;">
                         <span class="attribute_column_span">
@@ -87,7 +83,7 @@
                                 <label id="character_athletics" class="skill_input">{% if character is defined %}{% if character.athletics >= 0 %}+{% endif %}{{ character.athletics }}{% endif %}</label>
                             </span>
                         </div>
-                        <div style="width: 190px; margin: 2px 2px 2px 0px;">
+                        <div style="width: 190px; margin: 2px 2px 2px 2px;">
                             <span class="skill_span">
                                 <label class="skill_label">Arcana</label>
                                 <label id="character_arcana" class="skill_input">{% if character is defined %}{% if character.arcana >= 0 %}+{% endif %}{{ character.arcana }}{% endif %}</label>
@@ -153,7 +149,7 @@
                                 <label id="character_stealth" class="skill_input">{% if character is defined %}{% if character.stealth >= 0 %}+{% endif %}{{ character.stealth }}{% endif %}</label>
                             </span>
                         </div>
-                        <div style="width: 190px; margin: 2px 2px 2px 0px;">
+                        <div style="width: 190px; margin: 2px 2px 2px 2px;">
                             <span class="skill_span">
                                 <label class="skill_label">Animal Handling</label>
                                 <label id="character_animal_handling" class="skill_input">{% if character is defined %}{% if character.animal_handling >= 0 %}+{% endif %}{{ character.animal_handling }}{% endif %}</label>
@@ -211,7 +207,7 @@
                                 <label class="skill_input"></label>
                             </span>
                         </div>
-                        <div style="width: 190px; margin: 2px 2px 2px 0px;">
+                        <div style="width: 190px; margin: 2px 2px 2px 2px;">
                             <span class="skill_span">
                                 <label class="skill_label">Deception</label>
                                 <label id="character_deception" class="skill_input">{% if character is defined %}{% if character.deception >= 0 %}+{% endif %}{{ character.deception }}{% endif %}</label>
@@ -232,66 +228,70 @@
                     </li>
                 </ul>
             </div>
-            <div id="character_languages" {% if character is defined and character.languages == "" %}hidden{% endif %}>
-                <ul style="max-width: 450px;">
-                    <h3>Proficiencies</h3>
-                    <hr>
-                    <p style="white-space: pre-line;">{% if character is defined %}{{ character.languages }}{% endif %}</p>
-                </ul>
+            <div id="character_details">
+                <div id="character_languages" {% if character is defined and character.languages == "" %}hidden{% endif %}>
+                    <ul style="max-width: 450px;">
+                        <h3>Proficiencies</h3>
+                        <hr>
+                        <p style="white-space: pre-line;">{% if character is defined %}{{ character.languages }}{% endif %}</p>
+                    </ul>
+                </div>
+                <div id="character_species_traits" {% if character is defined and character.species_traits == "" %}hidden{% endif %}>
+                    <ul style="max-width: 450px;">
+                        <h3>Species Traits</h3>
+                        <hr>
+                        <p style="white-space: pre-line;">{% if character is defined %}{{ character.species_traits }}{% endif %}</p>
+                    </ul>
+                </div>
+                <div id="character_feats" {% if character is defined and character.feats == "" %}hidden{% endif %}>
+                    <ul style="max-width: 450px;">
+                        <h3>Feats</h3>
+                        <hr>
+                        <p style="white-space: pre-line;">{% if character is defined %}{{ character.feats }}{% endif %}</p>
+                    </ul>
+                </div>
+                <div id="character_traits" {% if character is defined and character.traits == "" %}hidden{% endif %}>
+                    <ul style="max-width: 450px;">
+                        <h3>Class Features</h3>
+                        <hr>
+                        <p style="white-space: pre-line;">{% if character is defined %}{{ character.traits }}{% endif %}</p>
+                    </ul>
+                </div>
             </div>
-            <div id="character_species_traits" {% if character is defined and character.species_traits == "" %}hidden{% endif %}>
-                <ul style="max-width: 450px;">
-                    <h3>Species Traits</h3>
-                    <hr>
-                    <p style="white-space: pre-line;">{% if character is defined %}{{ character.species_traits }}{% endif %}</p>
-                </ul>
-            </div>
-            <div id="character_feats" {% if character is defined and character.feats == "" %}hidden{% endif %}>
-                <ul style="max-width: 450px;">
-                    <h3>Feats</h3>
-                    <hr>
-                    <p style="white-space: pre-line;">{% if character is defined %}{{ character.feats }}{% endif %}</p>
-                </ul>
-            </div>
-            <div id="character_traits" {% if character is defined and character.traits == "" %}hidden{% endif %}>
-                <ul style="max-width: 450px;">
-                    <h3>Class Features</h3>
-                    <hr>
-                    <p style="white-space: pre-line;">{% if character is defined %}{{ character.traits }}{% endif %}</p>
-                </ul>
-            </div>
-            <div id="character_attacks" {% if character is defined and character.attacks|length == 0 %}hidden{% endif %}>
-                <ul style="max-width: 450px;">
-                    <h3>Attacks</h3>
-                    <hr>
-                    {% if character is defined %}
-                        {% for attack in character.attacks %}
-                            <label><strong>{{ attack.name }}</strong>. {{ attack.description}} {% if attack.bonus > 0 %}+{% endif %}{{ attack.bonus }} to hit.{% if attack.damages|length > 0 %} Hit: {% for damage in attack.damages %}{% if loop.index0 != 0 %}, plus {% endif %}{{ damage.count }}d{{ damage.size }} {% if damage.bonus != 0 %}{% if damage.bonus >= 0 %}+{% endif %} {{ damage.bonus }}{% endif %} {{ damage.type }} damage{% endfor %}.{% endif %}</label>
-                        {% endfor %}
-                    {% endif %}
-                </ul>
-            </div>
-            <div id="character_abilities" {% if character is defined and character.abilities|length == 0 %}hidden{% endif %}>
-                <ul style="max-width: 450px;">
-                    <h3>Abilities</h3>
-                    <hr>
-                    {% if character is defined %}
-                        {% for ability in character.abilities %}
-                            <label><strong>{{ ability.name }}</strong>. {{ ability.description}} DC{{ ability.dc }} {{ ability.attribute }} Save.{% if ability.damages|length > 0 %} Hit: {% for damage in ability.damages %}{% if loop.index0 != 0 %}, plus {% endif %}{{ damage.count }}d{{ damage.size }} {% if damage.bonus != 0 %}{% if damage.bonus >= 0 %}+{% endif %} {{ damage.bonus }}{% endif %} {{ damage.type }} damage{% endfor %}.{% endif %}</label>
-                        {% endfor %}
-                    {% endif %}
-                </ul>
-            </div>
-            <div id="character_resources" {% if character is defined and character.resources|length == 0 %}hidden{% endif %}>
-                <ul style="max-width: 450px;">
-                    <h3>Resources</h3>
-                    <hr>
-                    {% if character is defined %}
-                        {% for resource in character.resources %}
-                            <label><strong>{{ resource.name }}</strong>. {{ resource.description}} Charges: {{ resource.max_charges }}. Recharge: {{ resource.recharge }}.</label>
-                        {% endfor %}
-                    {% endif %}
-                </ul>
+            <div id="character_action_list">
+                <div id="character_attacks" {% if character is defined and character.attacks|length == 0 %}hidden{% endif %}>
+                    <ul style="max-width: 450px;">
+                        <h3>Attacks</h3>
+                        <hr>
+                        {% if character is defined %}
+                            {% for attack in character.attacks %}
+                                <label><strong>{{ attack.name }}</strong>. {{ attack.description}} {% if attack.bonus > 0 %}+{% endif %}{{ attack.bonus }} to hit.{% if attack.damages|length > 0 %} Hit: {% for damage in attack.damages %}{% if loop.index0 != 0 %}, plus {% endif %}{{ damage.count }}d{{ damage.size }} {% if damage.bonus != 0 %}{% if damage.bonus >= 0 %}+{% endif %} {{ damage.bonus }}{% endif %} {{ damage.type }} damage{% endfor %}.{% endif %}</label>
+                            {% endfor %}
+                        {% endif %}
+                    </ul>
+                </div>
+                <div id="character_abilities" {% if character is defined and character.abilities|length == 0 %}hidden{% endif %}>
+                    <ul style="max-width: 450px;">
+                        <h3>Abilities</h3>
+                        <hr>
+                        {% if character is defined %}
+                            {% for ability in character.abilities %}
+                                <label><strong>{{ ability.name }}</strong>. {{ ability.description}} DC{{ ability.dc }} {{ ability.attribute }} Save.{% if ability.damages|length > 0 %} Hit: {% for damage in ability.damages %}{% if loop.index0 != 0 %}, plus {% endif %}{{ damage.count }}d{{ damage.size }} {% if damage.bonus != 0 %}{% if damage.bonus >= 0 %}+{% endif %} {{ damage.bonus }}{% endif %} {{ damage.type }} damage{% endfor %}.{% endif %}</label>
+                            {% endfor %}
+                        {% endif %}
+                    </ul>
+                </div>
+                <div id="character_resources" {% if character is defined and character.resources|length == 0 %}hidden{% endif %}>
+                    <ul style="max-width: 450px;">
+                        <h3>Resources</h3>
+                        <hr>
+                        {% if character is defined %}
+                            {% for resource in character.resources %}
+                                <label><strong>{{ resource.name }}</strong>. {{ resource.description}} Charges: {{ resource.max_charges }}. Recharge: {{ resource.recharge }}.</label>
+                            {% endfor %}
+                        {% endif %}
+                    </ul>
+                </div>
             </div>
         </div>
         {% if character is defined and character.user_id == user%}

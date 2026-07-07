@@ -902,7 +902,7 @@ def view_encounter(encounter_id):
         )
         player_user_ids = [dict(row) for row in cur.fetchall()]
 
-    # Ensure encounter is owned by current user or user is in campaign and encounter is open for viewing
+    # Ensure encounter is owned by current user or user is player in campaign and encounter is open for viewing
     if encounter["dm_id"] != session["user_id"] and (encounter["status"] == "closed" or session["user_id"] not in list((user['user_id']) for user in player_user_ids)):
         return error("forbidden", 403)
     
@@ -915,6 +915,59 @@ def view_encounter(encounter_id):
             (encounter_id,)
         )
         combatants = [dict(row) for row in cur.fetchall()]
+
+    for combatant in combatants:
+        # Query database for attacks
+        with sqlite3.connect(database) as conn:
+            conn.row_factory = sqlite3.Row
+            cur = conn.cursor()
+            cur.execute(
+                "SELECT * FROM attacks WHERE creature_id = ?",
+                (combatant["creature_id"],)
+            )
+            combatant["attacks"] = [dict(row) for row in cur.fetchall()]
+
+        # Query database for attack damages
+        for attack in combatant["attacks"]:
+            with sqlite3.connect(database) as conn:
+                conn.row_factory = sqlite3.Row
+                cur = conn.cursor()
+                cur.execute(
+                    "SELECT * FROM damages WHERE trigger_id = ?",
+                    ("a:" + str(attack["id"]),)
+                )
+                attack["damages"] = [dict(row) for row in cur.fetchall()]
+
+        # Query database for abilities
+        with sqlite3.connect(database) as conn:
+            conn.row_factory = sqlite3.Row
+            cur = conn.cursor()
+            cur.execute(
+                "SELECT * FROM abilities WHERE creature_id = ?",
+                (combatant["creature_id"],)
+            )
+            combatant["abilities"] = [dict(row) for row in cur.fetchall()]
+
+        # Query database for ability damages
+        for ability in combatant["abilities"]:
+            with sqlite3.connect(database) as conn:
+                conn.row_factory = sqlite3.Row
+                cur = conn.cursor()
+                cur.execute(
+                    "SELECT * FROM damages WHERE trigger_id = ?",
+                    ("s:" + str(ability["id"]),)
+                )
+                ability["damages"] = [dict(row) for row in cur.fetchall()]
+        
+        # Query database for resources
+        with sqlite3.connect(database) as conn:
+            conn.row_factory = sqlite3.Row
+            cur = conn.cursor()
+            cur.execute(
+                "SELECT * FROM resources WHERE creature_id = ?",
+                (combatant["creature_id"],)
+            )
+            combatant["resources"] = [dict(row) for row in cur.fetchall()]
 
     # Sort combatants based on initiative, highest first, None at the end
     combatants = sorted(combatants, key=lambda x: (x["initiative"] is not None, x["initiative"], x["initiative_bonus"] is not None, x["initiative_bonus"]), reverse=True)
@@ -1396,41 +1449,87 @@ def handle_hp_update(encounter_id, combatant_id, current_hitpoints):
         emit("hp_updated", {"combatant": combatants[0]}, to=str(encounter_id))
 
 
-# Handle user creature details request
-@socketio.on('creature_info_request')
-def handle_character_info_request(user_id, creature_id, is_player):
+# Handle user combatant details request
+@socketio.on('combatant_info_request')
+def handle_character_info_request(user_id, combatant_id):
      # Ensure correct data was submitted
     try:
         user_id = int(user_id)
-        creature_id = int(creature_id)
-        is_player = int(is_player)
+        combatant_id = int(combatant_id)
     except TypeError:
         return
     except ValueError:
         return
     
-    # Decide to query for character or monster
-    if is_player:
-        tablename = "characters"
-    else:
-        tablename = "monsters"
-    
-    # Query database for creature
+    # Query database for combatant
     with sqlite3.connect(database) as conn:
         conn.row_factory = sqlite3.Row
         cur = conn.cursor()
         cur.execute(
-            "SELECT * FROM creatures JOIN " + tablename + " ON " + tablename + ".creature_id = creatures.id WHERE id = ?",
-            (creature_id,)
+            "SELECT * FROM combatants JOIN creatures ON creatures.id = combatants.creature_id LEFT JOIN characters ON characters.creature_id = combatants.creature_id LEFT JOIN monsters ON monsters.creature_id = combatants.creature_id WHERE combatants.id = ?",
+            (combatant_id,)
         )
-        creatures = [dict(row) for row in cur.fetchall()]
+        combatants = [dict(row) for row in cur.fetchall()]
 
-    # Ensure creature exists
-    if len(creatures) != 1:
+    # Ensure combatant exists
+    if len(combatants) != 1:
         return error("not found", 404)
+    combatant = combatants[0]
+    
+    # Query database for attacks
+    with sqlite3.connect(database) as conn:
+        conn.row_factory = sqlite3.Row
+        cur = conn.cursor()
+        cur.execute(
+            "SELECT * FROM attacks WHERE creature_id = ?",
+            (combatant["creature_id"],)
+        )
+        combatant["attacks"] = [dict(row) for row in cur.fetchall()]
+
+    # Query database for attack damages
+    for attack in combatant["attacks"]:
+        with sqlite3.connect(database) as conn:
+            conn.row_factory = sqlite3.Row
+            cur = conn.cursor()
+            cur.execute(
+                "SELECT * FROM damages WHERE trigger_id = ?",
+                ("a:" + str(attack["id"]),)
+            )
+            attack["damages"] = [dict(row) for row in cur.fetchall()]
+
+    # Query database for abilities
+    with sqlite3.connect(database) as conn:
+        conn.row_factory = sqlite3.Row
+        cur = conn.cursor()
+        cur.execute(
+            "SELECT * FROM abilities WHERE creature_id = ?",
+            (combatant["creature_id"],)
+        )
+        combatant["abilities"] = [dict(row) for row in cur.fetchall()]
+
+    # Query database for ability damages
+    for ability in combatant["abilities"]:
+        with sqlite3.connect(database) as conn:
+            conn.row_factory = sqlite3.Row
+            cur = conn.cursor()
+            cur.execute(
+                "SELECT * FROM damages WHERE trigger_id = ?",
+                ("s:" + str(ability["id"]),)
+            )
+            ability["damages"] = [dict(row) for row in cur.fetchall()]
+    
+    # Query database for resources
+    with sqlite3.connect(database) as conn:
+        conn.row_factory = sqlite3.Row
+        cur = conn.cursor()
+        cur.execute(
+            "SELECT * FROM resources WHERE creature_id = ?",
+            (combatant["creature_id"],)
+        )
+        combatant["resources"] = [dict(row) for row in cur.fetchall()]
 
     # Send update to campaign room
-    emit("creature_details_updated", {"creature": creatures[0]}, to=str(user_id))
+    emit("combatant_details_updated", {"combatant": combatant}, to=str(user_id))
 
 
 def handle_combatant_sort(encounter_id, namespace="/"):
